@@ -35,14 +35,8 @@ resource "powerplatform_environment" "this" {
     }
 
     precondition {
-      condition = var.managed_environment_enabled || (
-        !var.security_settings.enable_ip_based_firewall_rule &&
-        !var.security_settings.enable_ip_based_cookie_binding &&
-        length(var.security_settings.allowed_ip_range_for_firewall) == 0 &&
-        length(var.security_settings.allowed_service_tags_for_firewall) == 0 &&
-        length(var.security_settings.reverse_proxy_ip_addresses) == 0
-      )
-      error_message = "security_settings with firewall or cookie binding configuration require managed_environment_enabled = true. These settings are ignored on standard environments."
+      condition     = var.security_settings == null || var.managed_environment_enabled
+      error_message = "security_settings requires managed_environment_enabled = true."
     }
   }
 }
@@ -118,7 +112,7 @@ resource "powerplatform_environment_settings" "this" {
       natural_language_grid_and_view_search                         = var.feature_settings.natural_language_grid_and_view_search
       power_apps_component_framework_for_canvas_apps                = var.feature_settings.power_apps_component_framework_for_canvas_apps
     }
-    security = var.managed_environment_enabled ? {
+    security = var.managed_environment_enabled && var.security_settings != null ? {
       allow_application_user_access               = var.security_settings.allow_application_user_access
       allow_microsoft_trusted_service_tags        = var.security_settings.allow_microsoft_trusted_service_tags
       allowed_ip_range_for_firewall               = var.security_settings.allowed_ip_range_for_firewall
@@ -136,4 +130,5 @@ resource "powerplatform_environment_settings" "this" {
 
   depends_on = [powerplatform_managed_environment.this]
 }
+
 

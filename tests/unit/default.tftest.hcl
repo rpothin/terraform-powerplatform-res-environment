@@ -333,6 +333,44 @@ run "precondition_admin_mode_background_ops_conflict" {
   expect_failures = [powerplatform_environment.this]
 }
 
+run "security_settings_not_applied_by_default" {
+  command = apply
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+  }
+
+  assert {
+    condition     = var.security_settings == null
+    error_message = "security_settings should default to null so security configuration is opt-in."
+  }
+}
+
+run "security_settings_applied_when_explicit_and_managed_enabled" {
+  command = apply
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = true
+    security_settings = {
+      enable_ip_based_firewall_rule = true
+    }
+  }
+
+  assert {
+    condition     = powerplatform_environment_settings.this.product.security != null
+    error_message = "product.security should be set when security_settings are explicitly provided with managed_environment_enabled = true."
+  }
+}
+
 # ---------------------------------------------------------------------------
 # Output assertions
 # ---------------------------------------------------------------------------
@@ -540,5 +578,8 @@ run "precondition_security_settings_require_managed_environment" {
 
   expect_failures = [powerplatform_environment.this]
 }
+
+
+
 
 

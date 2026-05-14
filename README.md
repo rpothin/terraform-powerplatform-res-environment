@@ -277,7 +277,7 @@ Default: `true`
 
 ### <a name="input_security_settings"></a> [security\_settings](#input\_security\_settings)
 
-Description: Security settings for the environment. **Requires `managed_environment_enabled = true`** — these settings are silently non-functional on standard environments and will cause provider state errors if applied without a Managed Environment.
+Description: Optional security settings for the environment. Applied only when explicitly set and `managed_environment_enabled = true`.
 - `allow_application_user_access` - Allow service principal (application user) access. Defaults to `true`.
 - `allow_microsoft_trusted_service_tags` - Allow Microsoft trusted service tags through the firewall. Defaults to `false`.
 - `allowed_ip_range_for_firewall` - Set of CIDR IP ranges allowed through the firewall. Defaults to `[]`.
@@ -302,7 +302,7 @@ object({
   })
 ```
 
-Default: `{}`
+Default: `null`
 
 ## Outputs
 
