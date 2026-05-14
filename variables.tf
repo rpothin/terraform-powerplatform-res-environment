@@ -128,11 +128,12 @@ DESCRIPTION
 }
 
 variable "dataverse" {
-  nullable    = false
+  default     = {}
+  nullable    = true
   description = <<DESCRIPTION
-Dataverse database configuration. Always required — this module provisions environments with Dataverse.
-- `currency_code` - (Required) ISO 4217 currency code (e.g., `USD`, `EUR`, `GBP`).
-- `security_group_id` - (Required) Azure AD security group UUID for environment access control. Use `00000000-0000-0000-0000-000000000000` for no group restriction.
+Dataverse database configuration. Defaults to `{}` — Dataverse is provisioned with sensible defaults (`currency_code = "USD"`, no security group restriction). Override individual fields by passing a partial object. Pass `null` to skip Dataverse provisioning entirely (requires `managed_environment_enabled = false`).
+- `currency_code` - (Optional) ISO 4217 currency code (e.g., `USD`, `EUR`, `GBP`). Defaults to `"USD"`.
+- `security_group_id` - (Optional) Azure AD security group UUID for environment access control. Defaults to `"00000000-0000-0000-0000-000000000000"` (Power Platform convention for no group restriction — not a security recommendation; set an explicit group UUID for restricted access).
 - `administration_mode_enabled` - (Optional) Enable administration mode. Cannot be `true` simultaneously with `background_operation_enabled = true`. Defaults to `false`.
 - `background_operation_enabled` - (Optional) Enable background operations. Defaults to `true`.
 - `domain` - (Optional) Custom subdomain for the environment URL. Auto-calculated from `display_name` if null. Must be 2–63 lowercase alphanumeric characters and hyphens, no leading or trailing hyphens.
@@ -141,8 +142,8 @@ Dataverse database configuration. Always required — this module provisions env
 - `templates` - (Optional) List of Dynamics 365 template names to apply.
 DESCRIPTION
   type = object({
-    currency_code                = string
-    security_group_id            = string
+    currency_code                = optional(string, "USD")
+    security_group_id            = optional(string, "00000000-0000-0000-0000-000000000000")
     administration_mode_enabled  = optional(bool, false)
     background_operation_enabled = optional(bool, true)
     domain                       = optional(string, null)
@@ -152,7 +153,7 @@ DESCRIPTION
   })
 
   validation {
-    condition = contains([
+    condition = var.dataverse == null || contains([
       "USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "CNY", "SEK", "NOK",
       "DKK", "NZD", "MXN", "SGD", "HKD", "KRW", "INR", "BRL", "ZAR", "AED",
       "SAR", "PLN", "CZK", "HUF", "RON", "BGN", "HRK", "RUB", "TRY", "IDR",
@@ -165,17 +166,17 @@ DESCRIPTION
   }
 
   validation {
-    condition     = can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.dataverse.security_group_id))
+    condition     = var.dataverse == null || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.dataverse.security_group_id))
     error_message = "dataverse.security_group_id must be a valid lowercase UUID."
   }
 
   validation {
-    condition     = var.dataverse.language_code >= 1 && var.dataverse.language_code <= 9999
+    condition     = var.dataverse == null || (var.dataverse.language_code >= 1 && var.dataverse.language_code <= 9999)
     error_message = "dataverse.language_code must be between 1 and 9999."
   }
 
   validation {
-    condition     = var.dataverse.domain == null || can(regex("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$", var.dataverse.domain))
+    condition     = var.dataverse == null || var.dataverse.domain == null || can(regex("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$", var.dataverse.domain))
     error_message = "dataverse.domain must be lowercase alphanumeric and hyphens only, 2–63 characters, no leading or trailing hyphens."
   }
 }

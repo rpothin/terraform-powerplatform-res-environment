@@ -1,5 +1,5 @@
 locals {
-  final_domain = coalesce(
+  final_domain = var.dataverse != null ? coalesce(
     var.dataverse.domain,
     replace(
       replace(
@@ -10,5 +10,5 @@ locals {
       "/-+$/",
       ""
     )
-  )
+  ) : null
 }

@@ -10,9 +10,4 @@ module "environment" {
     display_name = var.display_name
     location     = var.location
   }
-
-  dataverse = {
-    currency_code     = var.dataverse_currency_code
-    security_group_id = var.dataverse_security_group_id
-  }
 }

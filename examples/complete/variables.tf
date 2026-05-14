@@ -17,7 +17,7 @@ variable "dataverse_language_code" {
 }
 
 variable "dataverse_security_group_id" {
-  description = "Azure AD security group UUID for Dataverse access control."
+  description = "Azure AD security group UUID for Dataverse access control. Required in this example to demonstrate explicit enterprise-grade access restriction."
   type        = string
 }
 

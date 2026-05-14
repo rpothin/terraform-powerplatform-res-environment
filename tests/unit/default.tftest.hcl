@@ -14,7 +14,6 @@ run "validates_display_name_too_short" {
       display_name = "AB"
       location     = "unitedstates"
     }
-    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -28,7 +27,6 @@ run "validates_display_name_too_long" {
       display_name = "AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFF123456789012"
       location     = "unitedstates"
     }
-    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -42,7 +40,6 @@ run "validates_display_name_invalid_chars" {
       display_name = "Test@Env!"
       location     = "unitedstates"
     }
-    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -57,7 +54,6 @@ run "validates_environment_type_invalid" {
       location         = "unitedstates"
       environment_type = "Developer"
     }
-    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -71,7 +67,6 @@ run "validates_location_invalid" {
       display_name = "Test Environment"
       location     = "mars"
     }
-    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -366,7 +361,7 @@ run "security_settings_applied_when_explicit_and_managed_enabled" {
   }
 
   assert {
-    condition     = powerplatform_environment_settings.this.product.security.enable_ip_based_firewall_rule == true
+    condition     = powerplatform_environment_settings.this[0].product.security.enable_ip_based_firewall_rule == true
     error_message = "Custom security settings should propagate to product.security when managed_environment_enabled = true."
   }
 }
@@ -670,6 +665,101 @@ run "environment_group_member_with_managed_disabled_plans" {
     condition     = length(powerplatform_managed_environment.this) == 0
     error_message = "No standalone managed environment resource should be created when environment_group_id is set."
   }
+}
+
+# ---------------------------------------------------------------------------
+# AVM SFR2 — Dataverse optional (default enabled, null to skip)
+# ---------------------------------------------------------------------------
+
+run "environment_with_default_dataverse_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+  }
+
+  assert {
+    condition     = powerplatform_environment.this.dataverse != null
+    error_message = "Dataverse should be provisioned by default when no dataverse variable is provided."
+  }
+}
+
+run "dataverse_null_skips_provisioning" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "No Dataverse Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = null
+    managed_environment_enabled = false
+  }
+
+  assert {
+    condition     = powerplatform_environment.this.dataverse == null
+    error_message = "Dataverse should not be provisioned when dataverse = null."
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "Managed environment should not be created when dataverse = null and managed_environment_enabled = false."
+  }
+
+  assert {
+    condition     = length(powerplatform_environment_settings.this) == 0
+    error_message = "Environment settings should not be created when dataverse = null."
+  }
+}
+
+run "precondition_managed_environment_requires_dataverse" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = null
+    managed_environment_enabled = true
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "precondition_environment_group_requires_dataverse" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name         = "Group Member Environment"
+      location             = "unitedstates"
+      environment_group_id = "12345678-1234-1234-1234-123456789012"
+    }
+    dataverse                   = null
+    managed_environment_enabled = false
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "precondition_application_admin_requires_dataverse" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = null
+    managed_environment_enabled = false
+    application_admin_id        = "12345678-1234-1234-1234-123456789012"
+  }
+
+  expect_failures = [powerplatform_environment.this]
 }
 
 

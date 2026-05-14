@@ -8,17 +8,16 @@ resource "powerplatform_environment" "this" {
   azure_region                     = var.environment.azure_region
   billing_policy_id                = var.environment.billing_policy_id
   cadence                          = var.environment.cadence
-  dataverse = {
-    currency_code = var.dataverse.currency_code
-    language_code = var.dataverse.language_code
-
+  dataverse = var.dataverse != null ? {
+    currency_code                = var.dataverse.currency_code
+    language_code                = var.dataverse.language_code
     administration_mode_enabled  = var.dataverse.administration_mode_enabled
     background_operation_enabled = var.dataverse.background_operation_enabled
     domain                       = local.final_domain
     security_group_id            = var.dataverse.security_group_id
     template_metadata            = var.dataverse.template_metadata
     templates                    = var.dataverse.templates
-  }
+  } : null
   description          = var.environment.description
   environment_group_id = var.environment.environment_group_id
   release_cycle        = var.environment.release_cycle
@@ -30,8 +29,23 @@ resource "powerplatform_environment" "this" {
 
   lifecycle {
     precondition {
-      condition     = !(var.dataverse.administration_mode_enabled && var.dataverse.background_operation_enabled)
+      condition     = var.dataverse == null || !(var.dataverse.administration_mode_enabled && var.dataverse.background_operation_enabled)
       error_message = "dataverse.background_operation_enabled must be false when dataverse.administration_mode_enabled is true."
+    }
+
+    precondition {
+      condition     = !var.managed_environment_enabled || var.dataverse != null
+      error_message = "managed_environment_enabled = true requires Dataverse provisioning. Set dataverse to a configuration object (or leave at default) to enable Dataverse, or set managed_environment_enabled = false."
+    }
+
+    precondition {
+      condition     = var.environment.environment_group_id == null || var.dataverse != null
+      error_message = "environment_group_id requires Dataverse provisioning. Set dataverse to a configuration object (or leave at default) to enable Dataverse."
+    }
+
+    precondition {
+      condition     = var.application_admin_id == null || var.dataverse != null
+      error_message = "application_admin_id requires Dataverse provisioning. Set dataverse to a configuration object (or leave at default) to enable Dataverse."
     }
 
     precondition {
@@ -85,6 +99,8 @@ resource "powerplatform_environment_application_admin" "this" {
 }
 
 resource "powerplatform_environment_settings" "this" {
+  count = var.dataverse != null ? 1 : 0
+
   environment_id = powerplatform_environment.this.id
 
   audit_and_logs = {

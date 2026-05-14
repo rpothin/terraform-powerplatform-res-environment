@@ -34,7 +34,7 @@ The following input variables are required:
 
 ### <a name="input_dataverse_security_group_id"></a> [dataverse\_security\_group\_id](#input\_dataverse\_security\_group\_id)
 
-Description: Azure AD security group UUID for Dataverse access control.
+Description: Azure AD security group UUID for Dataverse access control. Required in this example to demonstrate explicit enterprise-grade access restriction.
 
 Type: `string`
 

@@ -142,12 +142,12 @@ run "creates_managed_environment_with_firewall" {
   }
 
   assert {
-    condition     = powerplatform_environment_settings.this.product.security.enable_ip_based_firewall_rule == true
+    condition     = powerplatform_environment_settings.this[0].product.security.enable_ip_based_firewall_rule == true
     error_message = "Firewall setting should be enabled in plan when security_settings.enable_ip_based_firewall_rule = true."
   }
 
   assert {
-    condition     = length(powerplatform_environment_settings.this.product.security.allowed_ip_range_for_firewall) == 1
+    condition     = length(powerplatform_environment_settings.this[0].product.security.allowed_ip_range_for_firewall) == 1
     error_message = "allowed_ip_range_for_firewall should contain one CIDR value in plan."
   }
 }
@@ -182,5 +182,34 @@ run "creates_environment_with_application_admin" {
   assert {
     condition     = output.environment_display_name == "tftest-app-admin-env"
     error_message = "Output 'environment_display_name' should match the input display_name."
+  }
+}
+
+run "creates_environment_without_dataverse" {
+  command   = apply
+  state_key = "no-dataverse"
+
+  variables {
+    environment = {
+      display_name = "tftest-no-dv-env"
+      location     = "unitedstates"
+    }
+    dataverse                   = null
+    managed_environment_enabled = false
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.environment_url == null
+    error_message = "Output 'environment_url' should be null when no Dataverse is provisioned."
+  }
+
+  assert {
+    condition     = output.managed_environment_id == null
+    error_message = "Output 'managed_environment_id' should be null when managed_environment_enabled = false."
   }
 }

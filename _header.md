@@ -1,21 +1,21 @@
 # terraform-powerplatform-res-environment
 
-A composite [AVM-aligned](https://azure.github.io/Azure-Verified-Modules/) Terraform module that provisions a fully-configured Power Platform environment with Dataverse end-to-end.
+A composite [AVM-aligned](https://azure.github.io/Azure-Verified-Modules/) Terraform module that provisions a fully-configured Power Platform environment with optional Dataverse end-to-end.
 
 ## What this module creates
 
 | Resource | Condition | Purpose |
 |---|---|---|
-| `powerplatform_environment` | Always | Core Power Platform environment with Dataverse |
+| `powerplatform_environment` | Always | Core Power Platform environment. Dataverse provisioned by default (set `dataverse = null` to skip). |
 | `powerplatform_managed_environment` | `managed_environment_enabled = true` (default) | Premium governance features |
-| `powerplatform_environment_settings` | Always | Audit, features, email, security configuration |
+| `powerplatform_environment_settings` | `dataverse != null` (default) | Audit, features, email, security configuration (requires Dataverse) |
 | `powerplatform_environment_application_admin` | `application_admin_id` is set | Service principal as System Administrator |
 
 ## Secure defaults
 
 This module applies a **secure-by-default, zero-trust posture**:
 
-- **Dataverse always provisioned** — this module always creates a Dataverse database; use `dataverse.currency_code` and `dataverse.security_group_id` to configure it
+- **Dataverse provisioned by default** — Dataverse is enabled with sensible defaults (`currency_code = "USD"`, no security group restriction). Override via `dataverse = { ... }` or skip entirely with `dataverse = null` (requires `managed_environment_enabled = false`).
 - **Managed Environment enabled** — governance controls are on by default; required for `Production` environments (enforced by precondition)
 - **Immediate hardening for managed environments** — `security_settings` defaults to `{}` and security controls are applied as soon as Managed Environment is enabled
 - **All AI features disabled** — Copilot, form-fill AI, and generative features default to `Off` or `false`
