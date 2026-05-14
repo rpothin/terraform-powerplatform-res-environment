@@ -1,4 +1,4 @@
-# TODO (before publishing): Replace the source path below with the Terraform Registry
+# TODO (before publishing): Replace the source path below with the Terraform Registry - Test
 # address once the module is published, e.g.:
 #   source  = "rpothin/<module-name>/powerplatform"
 #   version = "~> 0.1"
