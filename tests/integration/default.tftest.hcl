@@ -157,8 +157,6 @@ run "creates_environment_with_application_admin" {
   command   = apply
   state_key = "application-admin"
 
-  if = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID != null && trimspace(env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID) != ""
-
   variables {
     environment = {
       display_name = "tftest-app-admin-env"
@@ -169,7 +167,7 @@ run "creates_environment_with_application_admin" {
       security_group_id = "00000000-0000-0000-0000-000000000000"
     }
     managed_environment_enabled = true
-    application_admin_id        = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID
+    application_admin_id        = "ef1fe61c-6544-488a-b99b-784922c9198a"
   }
 
   assert {
@@ -187,4 +185,6 @@ run "creates_environment_with_application_admin" {
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
+
+
 
