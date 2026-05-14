@@ -5,7 +5,7 @@
 This example demonstrates the minimal configuration required to create a Power Platform environment using this module.
 
 It creates:
-- A Sandbox environment in the specified region
+- A Sandbox environment in the specified region with a Dataverse database
 - A Managed Environment (enabled by default for governance)
 - Environment settings with secure, zero-trust defaults
 
@@ -30,6 +30,18 @@ No resources.
 
 The following input variables are required:
 
+### <a name="input_dataverse_currency_code"></a> [dataverse\_currency\_code](#input\_dataverse\_currency\_code)
+
+Description: ISO 4217 currency code for the Dataverse database (e.g., 'USD', 'EUR', 'GBP').
+
+Type: `string`
+
+### <a name="input_dataverse_security_group_id"></a> [dataverse\_security\_group\_id](#input\_dataverse\_security\_group\_id)
+
+Description: Azure AD security group UUID controlling access to the Dataverse database. Use '00000000-0000-0000-0000-000000000000' for no group restriction.
+
+Type: `string`
+
 ### <a name="input_display_name"></a> [display\_name](#input\_display\_name)
 
 Description: The display name for the Power Platform environment.
@@ -49,6 +61,10 @@ No optional inputs.
 ## Outputs
 
 The following outputs are exported:
+
+### <a name="output_dataverse_organization_id"></a> [dataverse\_organization\_id](#output\_dataverse\_organization\_id)
+
+Description: The Dataverse organization ID of the environment.
 
 ### <a name="output_environment_display_name"></a> [environment\_display\_name](#output\_environment\_display\_name)
 

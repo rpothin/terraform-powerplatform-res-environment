@@ -14,6 +14,7 @@ run "validates_display_name_too_short" {
       display_name = "AB"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -27,6 +28,7 @@ run "validates_display_name_too_long" {
       display_name = "AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFF123456789012"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -40,6 +42,7 @@ run "validates_display_name_invalid_chars" {
       display_name = "Test@Env!"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -54,6 +57,7 @@ run "validates_environment_type_invalid" {
       location         = "unitedstates"
       environment_type = "Developer"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -67,6 +71,7 @@ run "validates_location_invalid" {
       display_name = "Test Environment"
       location     = "mars"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   expect_failures = [var.environment]
@@ -84,6 +89,7 @@ run "validates_application_admin_id_invalid_uuid" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse            = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     application_admin_id = "not-a-uuid"
   }
 
@@ -140,6 +146,7 @@ run "validates_audit_log_retention_out_of_range" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     audit_and_logs = {
       log_retention_period_in_days = 10
     }
@@ -156,6 +163,7 @@ run "validates_plugin_trace_log_setting_invalid" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     audit_and_logs = {
       plugin_trace_log_setting = "Verbose"
     }
@@ -176,6 +184,7 @@ run "validates_email_max_upload_too_large" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     email_settings = {
       max_upload_file_size_in_bytes = 200000000
     }
@@ -196,6 +205,7 @@ run "validates_solution_checker_mode_invalid" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     managed_environment = {
       solution_checker_mode = "Enforce"
     }
@@ -216,6 +226,7 @@ run "managed_environment_created_by_default" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   assert {
@@ -232,6 +243,7 @@ run "managed_environment_not_created_when_disabled" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     managed_environment_enabled = false
   }
 
@@ -249,6 +261,7 @@ run "application_admin_not_created_when_null" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   assert {
@@ -265,6 +278,7 @@ run "application_admin_created_when_set" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse            = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     application_admin_id = "12345678-1234-1234-1234-123456789012"
   }
 
@@ -277,21 +291,6 @@ run "application_admin_created_when_set" {
 # ---------------------------------------------------------------------------
 # Lifecycle preconditions
 # ---------------------------------------------------------------------------
-
-run "precondition_env_group_requires_dataverse" {
-  command = plan
-
-  variables {
-    environment = {
-      display_name         = "Test Environment"
-      location             = "unitedstates"
-      environment_group_id = "12345678-1234-1234-1234-123456789012"
-    }
-    dataverse = null
-  }
-
-  expect_failures = [powerplatform_environment.this]
-}
 
 run "precondition_admin_mode_background_ops_conflict" {
   command = plan
@@ -324,6 +323,7 @@ run "output_environment_id_is_non_empty" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
   }
 
   # Override the computed id so it is known at plan time with a mock provider.
@@ -349,6 +349,7 @@ run "managed_environment_id_null_when_disabled" {
       display_name = "Test Environment"
       location     = "unitedstates"
     }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
     managed_environment_enabled = false
   }
 
@@ -401,4 +402,119 @@ run "domain_respects_explicit_value" {
     condition     = powerplatform_environment.this.dataverse.domain == "my-custom-domain"
     error_message = "Explicit domain should override the auto-calculated value."
   }
+}
+
+# ---------------------------------------------------------------------------
+# Variable validation — feature_settings
+# ---------------------------------------------------------------------------
+
+run "validates_ai_form_fill_invalid_value" {
+  command = plan
+
+  variables {
+    environment      = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse        = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    feature_settings = { ai_form_fill_toolbar = "Invalid" }
+  }
+
+  expect_failures = [var.feature_settings]
+}
+
+run "validates_allow_ai_to_generate_charts_invalid" {
+  command = plan
+
+  variables {
+    environment      = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse        = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    feature_settings = { allow_ai_to_generate_charts = "Yes" }
+  }
+
+  expect_failures = [var.feature_settings]
+}
+
+run "validates_natural_language_search_invalid" {
+  command = plan
+
+  variables {
+    environment      = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse        = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    feature_settings = { natural_language_grid_and_view_search = "Everyone" }
+  }
+
+  expect_failures = [var.feature_settings]
+}
+
+# ---------------------------------------------------------------------------
+# Variable validation — managed_environment sharing modes
+# ---------------------------------------------------------------------------
+
+run "validates_limit_sharing_mode_invalid" {
+  command = plan
+
+  variables {
+    environment         = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse           = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment = { limit_sharing_mode = "Restricted" }
+  }
+
+  expect_failures = [var.managed_environment]
+}
+
+run "validates_copilot_limit_sharing_mode_invalid" {
+  command = plan
+
+  variables {
+    environment         = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse           = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment = { copilot_limit_sharing_mode = "Restricted" }
+  }
+
+  expect_failures = [var.managed_environment]
+}
+
+# ---------------------------------------------------------------------------
+# Variable validation — dataverse domain format
+# ---------------------------------------------------------------------------
+
+run "validates_domain_invalid_format" {
+  command = plan
+
+  variables {
+    environment = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000", domain = "INVALID DOMAIN!" }
+  }
+
+  expect_failures = [var.dataverse]
+}
+
+# ---------------------------------------------------------------------------
+# Variable validation — display_name alphanumeric requirement
+# ---------------------------------------------------------------------------
+
+run "validates_display_name_no_alphanumeric" {
+  command = plan
+
+  variables {
+    environment = { display_name = "___", location = "unitedstates" }
+    dataverse   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+  }
+
+  expect_failures = [var.environment]
+}
+
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — security_settings requires managed_environment
+# ---------------------------------------------------------------------------
+
+run "precondition_security_settings_require_managed_environment" {
+  command = plan
+
+  variables {
+    environment                 = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = false
+    security_settings           = { enable_ip_based_firewall_rule = true }
+  }
+
+  expect_failures = [powerplatform_environment.this]
 }

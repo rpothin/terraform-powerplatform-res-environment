@@ -12,3 +12,8 @@ output "environment_url" {
   description = "The Dataverse URL of the Power Platform environment."
   value       = module.environment.environment_url
 }
+
+output "dataverse_organization_id" {
+  description = "The Dataverse organization ID of the environment."
+  value       = module.environment.dataverse_organization_id
+}

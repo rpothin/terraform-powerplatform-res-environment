@@ -24,18 +24,15 @@ module "environment" {
   managed_environment_enabled = var.managed_environment_enabled
 
   managed_environment = {
-    solution_checker_mode  = "Warn"
-    limit_sharing_mode     = "ExcludeSharingToSecurityGroups"
-    max_limit_user_sharing = 10
+    solution_checker_mode              = "Block"
+    suppress_validation_emails         = true
+    power_automate_is_sharing_disabled = true
   }
 
   audit_and_logs = {
     is_audit_enabled             = true
-    log_retention_period_in_days = 90
+    is_user_access_audit_enabled = true
+    log_retention_period_in_days = 180
     plugin_trace_log_setting     = "Exception"
-  }
-
-  feature_settings = {
-    power_apps_component_framework_for_canvas_apps = false
   }
 }

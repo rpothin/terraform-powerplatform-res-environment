@@ -8,7 +8,7 @@ resource "powerplatform_environment" "this" {
   azure_region                     = var.environment.azure_region
   billing_policy_id                = var.environment.billing_policy_id
   cadence                          = var.environment.cadence
-  dataverse = var.dataverse != null ? {
+  dataverse = {
     currency_code = var.dataverse.currency_code
     language_code = var.dataverse.language_code
 
@@ -18,7 +18,7 @@ resource "powerplatform_environment" "this" {
     security_group_id            = var.dataverse.security_group_id
     template_metadata            = var.dataverse.template_metadata
     templates                    = var.dataverse.templates
-  } : null
+  }
   description          = var.environment.description
   environment_group_id = var.environment.environment_group_id
   release_cycle        = var.environment.release_cycle
@@ -30,13 +30,19 @@ resource "powerplatform_environment" "this" {
 
   lifecycle {
     precondition {
-      condition     = var.environment.environment_group_id == null || var.dataverse != null
-      error_message = "environment.environment_group_id requires Dataverse configuration. Set var.dataverse to enable Dataverse."
+      condition     = !(var.dataverse.administration_mode_enabled && var.dataverse.background_operation_enabled)
+      error_message = "dataverse.background_operation_enabled must be false when dataverse.administration_mode_enabled is true."
     }
 
     precondition {
-      condition     = var.dataverse == null || !(var.dataverse.administration_mode_enabled && var.dataverse.background_operation_enabled)
-      error_message = "dataverse.background_operation_enabled must be false when dataverse.administration_mode_enabled is true."
+      condition = var.managed_environment_enabled || (
+        !var.security_settings.enable_ip_based_firewall_rule &&
+        !var.security_settings.enable_ip_based_cookie_binding &&
+        length(var.security_settings.allowed_ip_range_for_firewall) == 0 &&
+        length(var.security_settings.allowed_service_tags_for_firewall) == 0 &&
+        length(var.security_settings.reverse_proxy_ip_addresses) == 0
+      )
+      error_message = "security_settings with firewall or cookie binding configuration require managed_environment_enabled = true. These settings are ignored on standard environments."
     }
   }
 }
@@ -44,19 +50,19 @@ resource "powerplatform_environment" "this" {
 resource "powerplatform_managed_environment" "this" {
   count = var.managed_environment_enabled ? 1 : 0
 
-  environment_id             = powerplatform_environment.this.id
-  is_group_sharing_disabled  = var.managed_environment.is_group_sharing_disabled
-  is_usage_insights_disabled = var.managed_environment.is_usage_insights_disabled
-  limit_sharing_mode         = var.managed_environment.limit_sharing_mode
-  max_limit_user_sharing     = var.managed_environment.max_limit_user_sharing
-  solution_checker_mode      = var.managed_environment.solution_checker_mode
-  suppress_validation_emails = var.managed_environment.suppress_validation_emails
+  environment_id = powerplatform_environment.this.id
 
   copilot_allow_grant_editor_permissions_when_shared = var.managed_environment.copilot_allow_grant_editor_permissions_when_shared
   copilot_limit_sharing_mode                         = var.managed_environment.copilot_limit_sharing_mode
   copilot_max_limit_user_sharing                     = var.managed_environment.copilot_max_limit_user_sharing
+  is_group_sharing_disabled                          = var.managed_environment.is_group_sharing_disabled
+  is_usage_insights_disabled                         = var.managed_environment.is_usage_insights_disabled
+  limit_sharing_mode                                 = var.managed_environment.limit_sharing_mode
+  max_limit_user_sharing                             = var.managed_environment.max_limit_user_sharing
   power_automate_is_sharing_disabled                 = var.managed_environment.power_automate_is_sharing_disabled
+  solution_checker_mode                              = var.managed_environment.solution_checker_mode
   solution_checker_rule_overrides                    = var.managed_environment.solution_checker_rule_overrides
+  suppress_validation_emails                         = var.managed_environment.suppress_validation_emails
   timeouts = {
     create = "10m"
     delete = "10m"

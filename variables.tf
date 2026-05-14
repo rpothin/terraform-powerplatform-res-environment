@@ -39,6 +39,11 @@ DESCRIPTION
   }
 
   validation {
+    condition     = can(regex("[a-zA-Z0-9]", var.environment.display_name))
+    error_message = "environment.display_name must contain at least one alphanumeric character."
+  }
+
+  validation {
     condition = contains([
       "unitedstates", "europe", "asia", "australia", "japan", "india",
       "canada", "southamerica", "unitedkingdom", "france", "germany",
@@ -123,14 +128,14 @@ DESCRIPTION
 }
 
 variable "dataverse" {
-  default     = null
+  nullable    = false
   description = <<DESCRIPTION
-Dataverse database configuration. Set to `null` to create an environment without a Dataverse database.
+Dataverse database configuration. Always required — this module provisions environments with Dataverse.
 - `currency_code` - (Required) ISO 4217 currency code (e.g., `USD`, `EUR`, `GBP`).
 - `security_group_id` - (Required) Azure AD security group UUID for environment access control. Use `00000000-0000-0000-0000-000000000000` for no group restriction.
 - `administration_mode_enabled` - (Optional) Enable administration mode. Cannot be `true` simultaneously with `background_operation_enabled = true`. Defaults to `false`.
 - `background_operation_enabled` - (Optional) Enable background operations. Defaults to `true`.
-- `domain` - (Optional) Custom subdomain for the environment URL. Auto-calculated from `display_name` if null.
+- `domain` - (Optional) Custom subdomain for the environment URL. Auto-calculated from `display_name` if null. Must be 2–63 lowercase alphanumeric characters and hyphens, no leading or trailing hyphens.
 - `language_code` - (Optional) LCID language code (e.g., `1033` for English). Defaults to `1033`.
 - `template_metadata` - (Optional) Additional Dynamics 365 template metadata.
 - `templates` - (Optional) List of Dynamics 365 template names to apply.
@@ -147,7 +152,7 @@ DESCRIPTION
   })
 
   validation {
-    condition = var.dataverse == null || contains([
+    condition = contains([
       "USD", "EUR", "GBP", "CAD", "AUD", "JPY", "CHF", "CNY", "SEK", "NOK",
       "DKK", "NZD", "MXN", "SGD", "HKD", "KRW", "INR", "BRL", "ZAR", "AED",
       "SAR", "PLN", "CZK", "HUF", "RON", "BGN", "HRK", "RUB", "TRY", "IDR",
@@ -160,13 +165,18 @@ DESCRIPTION
   }
 
   validation {
-    condition     = var.dataverse == null || can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.dataverse.security_group_id))
+    condition     = can(regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", var.dataverse.security_group_id))
     error_message = "dataverse.security_group_id must be a valid lowercase UUID."
   }
 
   validation {
-    condition     = var.dataverse == null || (var.dataverse.language_code >= 1 && var.dataverse.language_code <= 9999)
+    condition     = var.dataverse.language_code >= 1 && var.dataverse.language_code <= 9999
     error_message = "dataverse.language_code must be between 1 and 9999."
+  }
+
+  validation {
+    condition     = var.dataverse.domain == null || can(regex("^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$", var.dataverse.domain))
+    error_message = "dataverse.domain must be lowercase alphanumeric and hyphens only, 2–63 characters, no leading or trailing hyphens."
   }
 }
 
@@ -192,12 +202,12 @@ variable "feature_settings" {
   nullable    = false
   description = <<DESCRIPTION
 Product feature flags for the environment. All AI-powered features default to disabled (zero-trust posture).
-- `ai_form_fill_automatic_suggestions` - AI automatic form fill suggestions. Defaults to `"Off"`.
-- `ai_form_fill_smart_paste_and_file_suggestions` - AI smart paste and file suggestions. Defaults to `"Off"`.
-- `ai_form_fill_toolbar` - AI form fill toolbar. Defaults to `"Off"`.
-- `allow_ai_to_generate_charts` - Allow AI to generate charts. Defaults to `"Off"`.
+- `ai_form_fill_automatic_suggestions` - AI automatic form fill suggestions. Valid values: `On`, `Off`, `Default`. Defaults to `"Off"`.
+- `ai_form_fill_smart_paste_and_file_suggestions` - AI smart paste and file suggestions. Valid values: `On`, `Off`, `Default`. Defaults to `"Off"`.
+- `ai_form_fill_toolbar` - AI form fill toolbar. Valid values: `On`, `Off`, `Default`. Defaults to `"Off"`.
+- `allow_ai_to_generate_charts` - Allow AI to generate charts. Valid values: `On`, `Off`, `Auto`. Defaults to `"Off"`.
 - `enable_access_to_session_transcripts_for_copilot_studio` - Allow access to session transcripts. Defaults to `false`.
-- `enable_ai_powered_chat` - AI-powered chat assistant. Defaults to `"Off"`.
+- `enable_ai_powered_chat` - AI-powered chat assistant. Valid values: `On`, `Off`, `Default`. Defaults to `"Off"`.
 - `enable_ai_prompts` - Enable AI prompts. Defaults to `false`.
 - `enable_copilot_answer_control` - Enable Copilot answer controls. Defaults to `false`.
 - `enable_copilot_studio_cross_geo_share_data_with_viva_insights` - Cross-geo Viva Insights sharing. Defaults to `false`.
@@ -205,7 +215,7 @@ Product feature flags for the environment. All AI-powered features default to di
 - `enable_powerapps_maker_bot` - AI-powered Copilot for makers. Defaults to `false`.
 - `enable_preview_and_experimental_ai_models` - Preview AI model access. Defaults to `false`.
 - `enable_transcript_recording_for_copilot_studio` - Transcript recording for Copilot Studio. Defaults to `false`.
-- `natural_language_grid_and_view_search` - Natural language search scope. Defaults to `"NoOne"`.
+- `natural_language_grid_and_view_search` - Natural language search scope. Valid values: `AllUsers`, `UserAsFeatureBecomesAvailable`, `NoOne`. Defaults to `"NoOne"`.
 - `power_apps_component_framework_for_canvas_apps` - Enable PCF controls in canvas apps. Defaults to `false`.
 DESCRIPTION
   type = object({
@@ -225,6 +235,30 @@ DESCRIPTION
     natural_language_grid_and_view_search                         = optional(string, "NoOne")
     power_apps_component_framework_for_canvas_apps                = optional(bool, false)
   })
+
+  validation {
+    condition = alltrue([for v in [
+      var.feature_settings.ai_form_fill_automatic_suggestions,
+      var.feature_settings.ai_form_fill_smart_paste_and_file_suggestions,
+      var.feature_settings.ai_form_fill_toolbar,
+    ] : contains(["On", "Off", "Default"], v)])
+    error_message = "feature_settings AI form-fill fields must be one of: On, Off, Default."
+  }
+
+  validation {
+    condition     = contains(["On", "Off", "Default"], var.feature_settings.enable_ai_powered_chat)
+    error_message = "feature_settings.enable_ai_powered_chat must be one of: On, Off, Default."
+  }
+
+  validation {
+    condition     = contains(["On", "Off", "Auto"], var.feature_settings.allow_ai_to_generate_charts)
+    error_message = "feature_settings.allow_ai_to_generate_charts must be one of: On, Off, Auto."
+  }
+
+  validation {
+    condition     = contains(["AllUsers", "UserAsFeatureBecomesAvailable", "NoOne"], var.feature_settings.natural_language_grid_and_view_search)
+    error_message = "feature_settings.natural_language_grid_and_view_search must be one of: AllUsers, UserAsFeatureBecomesAvailable, NoOne."
+  }
 }
 
 variable "managed_environment" {
@@ -233,11 +267,11 @@ variable "managed_environment" {
   description = <<DESCRIPTION
 Managed Environment governance configuration. Applied when `managed_environment_enabled = true` and no `environment_group_id` is set (settings are inherited from the group otherwise). All fields default to secure, governance-aligned values.
 - `copilot_allow_grant_editor_permissions_when_shared` - Allow Copilot to grant Editor permissions when shared. Defaults to `false`.
-- `copilot_limit_sharing_mode` - Sharing scope for Copilot agents. Defaults to `"ExcludeSharingToSecurityGroups"`.
+- `copilot_limit_sharing_mode` - Sharing scope for Copilot agents. Valid values: `DisableSharing`, `ExcludeSharingToSecurityGroups`, `NoLimit`. Defaults to `"ExcludeSharingToSecurityGroups"`.
 - `copilot_max_limit_user_sharing` - Maximum users for Copilot agent sharing (-1 when group sharing enabled). Defaults to `10`.
 - `is_group_sharing_disabled` - Restrict canvas app sharing to security groups. Defaults to `true`.
 - `is_usage_insights_disabled` - Disable weekly usage insights emails. Defaults to `false` (insights are valuable for governance).
-- `limit_sharing_mode` - Canvas app sharing scope. Defaults to `"ExcludeSharingToSecurityGroups"`.
+- `limit_sharing_mode` - Canvas app sharing scope. Valid values: `ExcludeSharingToSecurityGroups`, `NoLimit`. Defaults to `"ExcludeSharingToSecurityGroups"`.
 - `max_limit_user_sharing` - Maximum users canvas apps can be shared with (-1 when group sharing enabled). Defaults to `10`.
 - `power_automate_is_sharing_disabled` - Disable sharing of solution-aware cloud flows. Defaults to `true`.
 - `solution_checker_mode` - Solution checker enforcement: `None`, `Warn`, or `Block`. Defaults to `"Warn"`.
@@ -271,6 +305,16 @@ DESCRIPTION
   validation {
     condition     = var.managed_environment.copilot_max_limit_user_sharing >= -1
     error_message = "managed_environment.copilot_max_limit_user_sharing must be -1 or a positive integer."
+  }
+
+  validation {
+    condition     = contains(["ExcludeSharingToSecurityGroups", "NoLimit"], var.managed_environment.limit_sharing_mode)
+    error_message = "managed_environment.limit_sharing_mode must be one of: ExcludeSharingToSecurityGroups, NoLimit."
+  }
+
+  validation {
+    condition     = contains(["DisableSharing", "ExcludeSharingToSecurityGroups", "NoLimit"], var.managed_environment.copilot_limit_sharing_mode)
+    error_message = "managed_environment.copilot_limit_sharing_mode must be one of: DisableSharing, ExcludeSharingToSecurityGroups, NoLimit."
   }
 }
 
