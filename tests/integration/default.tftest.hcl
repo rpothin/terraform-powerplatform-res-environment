@@ -122,11 +122,11 @@ run "creates_managed_environment" {
 }
 run "creates_managed_environment_with_firewall" {
   command   = apply
-  state_key = "managed-firewall"
+  state_key = "managed"
 
   variables {
     environment = {
-      display_name = "tftest-managed-firewall-env"
+      display_name = "tftest-managed-env"
       location     = "unitedstates"
     }
     dataverse = {
@@ -185,6 +185,7 @@ run "creates_environment_with_application_admin" {
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
+
 
 
 

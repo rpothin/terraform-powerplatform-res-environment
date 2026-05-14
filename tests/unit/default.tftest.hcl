@@ -333,7 +333,7 @@ run "precondition_admin_mode_background_ops_conflict" {
   expect_failures = [powerplatform_environment.this]
 }
 
-run "security_settings_applied_by_default_when_managed_enabled" {
+run "security_settings_not_applied_by_default" {
   command = apply
 
   variables {
@@ -345,8 +345,8 @@ run "security_settings_applied_by_default_when_managed_enabled" {
   }
 
   assert {
-    condition     = powerplatform_environment_settings.this.product.security != null
-    error_message = "product.security should be set by default when managed_environment_enabled = true."
+    condition     = var.security_settings == null
+    error_message = "security_settings should default to null so security configuration is opt-in."
   }
 }
 
@@ -581,7 +581,7 @@ run "validates_display_name_no_alphanumeric" {
 # Lifecycle preconditions — security_settings requires managed_environment
 # ---------------------------------------------------------------------------
 
-run "precondition_fails_when_managed_environment_disabled_and_security_customized" {
+run "precondition_security_settings_require_managed_environment" {
   command = plan
 
   variables {
@@ -593,6 +593,8 @@ run "precondition_fails_when_managed_environment_disabled_and_security_customize
 
   expect_failures = [powerplatform_environment.this]
 }
+
+
 
 
 
