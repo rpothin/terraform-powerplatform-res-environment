@@ -1,11 +1,9 @@
-variable "name" {
-  description = "The name of the resource."
+variable "display_name" {
+  description = "The display name for the Power Platform environment."
   type        = string
-  default     = "example-basic"
 }
 
 variable "location" {
-  description = "The geographic location for the resource."
+  description = "The geographic location for the Power Platform environment (e.g., 'unitedstates', 'europe')."
   type        = string
-  default     = "unitedstates"
 }

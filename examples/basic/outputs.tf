@@ -1,9 +1,14 @@
-output "resource_id" {
-  description = "The ID of the managed resource."
-  value       = module.this.resource_id
+output "environment_id" {
+  description = "The unique identifier (GUID) of the Power Platform environment."
+  value       = module.environment.environment_id
 }
 
-output "name" {
-  description = "The name of the managed resource."
-  value       = module.this.name
+output "environment_display_name" {
+  description = "The display name of the Power Platform environment."
+  value       = module.environment.environment_display_name
+}
+
+output "environment_url" {
+  description = "The Dataverse URL of the Power Platform environment."
+  value       = module.environment.environment_url
 }

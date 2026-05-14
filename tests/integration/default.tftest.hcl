@@ -1,41 +1,93 @@
-# Integration tests — uses real provider, requires OIDC credentials.
+# Integration tests — requires real Power Platform credentials via OIDC.
 #
-# Prerequisites:
-#   ARM_USE_OIDC=true                              (signals OIDC mode; reused from AzureRM convention by the Power Platform provider)
+# Prerequisites (set as environment variables before running):
+#   ARM_USE_OIDC=true
 #   POWER_PLATFORM_TENANT_ID=<your-tenant-id>
 #   POWER_PLATFORM_CLIENT_ID=<your-client-id>
 #
 # These tests create real resources against a Power Platform tenant.
-# Resources are automatically destroyed after test completion.
+# Resources are automatically destroyed after test completion by the
+# Terraform test framework. Do NOT run locally without valid credentials.
+# Intended for CI use only.
 
-run "creates_resource_with_required_variables" {
+provider "powerplatform" {}
+
+run "creates_basic_environment" {
   command = apply
 
   variables {
-    name     = "tftest-integration"
-    location = "unitedstates"
+    environment = {
+      display_name = "tftest-basic-env"
+      location     = "unitedstates"
+    }
+    managed_environment_enabled = false
   }
 
   assert {
-    condition     = output.name == "tftest-integration"
-    error_message = "Resource name should match the input variable."
+    condition     = output.environment_display_name == "tftest-basic-env"
+    error_message = "Output 'environment_display_name' should match the input display_name."
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.managed_environment_id == null
+    error_message = "Output 'managed_environment_id' should be null when managed_environment_enabled = false."
   }
 }
 
-run "creates_resource_with_all_variables" {
+run "creates_environment_with_dataverse" {
   command = apply
 
   variables {
-    name     = "tftest-integration-complete"
-    location = "unitedstates"
-    tags = {
-      environment = "integration-test"
-      managed_by  = "terraform-test"
+    environment = {
+      display_name = "tftest-dataverse-env"
+      location     = "unitedstates"
     }
+    dataverse = {
+      currency_code     = "USD"
+      security_group_id = "00000000-0000-0000-0000-000000000000"
+    }
+    managed_environment_enabled = false
   }
 
   assert {
-    condition     = output.name == "tftest-integration-complete"
-    error_message = "Resource name should match the input variable."
+    condition     = output.environment_display_name == "tftest-dataverse-env"
+    error_message = "Output 'environment_display_name' should match the input display_name."
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.dataverse_organization_id != null
+    error_message = "Output 'dataverse_organization_id' should not be null when Dataverse is configured."
+  }
+}
+
+run "creates_managed_environment" {
+  command = apply
+
+  variables {
+    environment = {
+      display_name = "tftest-managed-env"
+      location     = "unitedstates"
+    }
+    managed_environment_enabled = true
+  }
+
+  assert {
+    condition     = output.environment_display_name == "tftest-managed-env"
+    error_message = "Output 'environment_display_name' should match the input display_name."
+  }
+
+  assert {
+    condition     = output.managed_environment_id != null
+    error_message = "Output 'managed_environment_id' should be non-null when managed_environment_enabled = true."
   }
 }
