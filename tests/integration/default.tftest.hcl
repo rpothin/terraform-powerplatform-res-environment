@@ -157,10 +157,7 @@ run "creates_environment_with_application_admin" {
   command   = apply
   state_key = "application-admin"
 
-  skip "requires_application_admin_id" {
-    condition = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID == null || trimspace(env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID) == ""
-    reason    = "Skipping application admin integration test because POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID is not set."
-  }
+  if = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID != null && trimspace(env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID) != ""
 
   variables {
     environment = {
@@ -190,3 +187,4 @@ run "creates_environment_with_application_admin" {
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
+
