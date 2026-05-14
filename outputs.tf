@@ -5,7 +5,7 @@ output "resource_id" {
   value       = null # Replace with actual resource ID, e.g., powerplatform_environment.this.id
 }
 
-output "name" {
-  description = "The name of the managed resource."
-  value       = var.name
+output "display_name" {
+  description = "The display name of the Power Platform environment."
+  value       = var.environment.display_name
 }

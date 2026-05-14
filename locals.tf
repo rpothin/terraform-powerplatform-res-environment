@@ -1,8 +1,6 @@
-# Local values for computed expressions.
-# Add local values here to keep resource definitions clean.
-#
-# Example:
-#
-# locals {
-#   resource_name = "${var.name}-${var.location}"
-# }
+locals {
+  final_domain = var.dataverse != null ? coalesce(
+    var.dataverse.domain,
+    substr(replace(lower(var.environment.display_name), "/[^a-z0-9]/", "-"), 0, 63)
+  ) : null
+}
