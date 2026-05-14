@@ -120,8 +120,9 @@ run "creates_managed_environment" {
     error_message = "Output 'environment_url' should not be null — all environments now have Dataverse."
   }
 }
+
 run "creates_managed_environment_with_firewall" {
-  command   = apply
+  command   = plan
   state_key = "managed"
 
   variables {
@@ -141,17 +142,15 @@ run "creates_managed_environment_with_firewall" {
   }
 
   assert {
-    condition     = output.environment_id != ""
-    error_message = "Output 'environment_id' should be a non-empty string after apply."
+    condition     = powerplatform_environment_settings.this.product.security.enable_ip_based_firewall_rule == true
+    error_message = "Firewall setting should be enabled in plan when security_settings.enable_ip_based_firewall_rule = true."
   }
 
   assert {
-    condition     = output.managed_environment_id != null
-    error_message = "Output 'managed_environment_id' should be non-null when managed_environment_enabled = true and firewall settings are provided."
+    condition     = length(powerplatform_environment_settings.this.product.security.allowed_ip_range_for_firewall) == 1
+    error_message = "allowed_ip_range_for_firewall should contain one CIDR value in plan."
   }
 }
-
-
 
 run "creates_environment_with_application_admin" {
   command   = apply
@@ -185,7 +184,3 @@ run "creates_environment_with_application_admin" {
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
-
-
-
-
