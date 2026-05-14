@@ -594,9 +594,83 @@ run "precondition_security_settings_require_managed_environment" {
   expect_failures = [powerplatform_environment.this]
 }
 
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — Production requires managed environment
+# ---------------------------------------------------------------------------
 
+run "precondition_production_requires_managed_environment" {
+  command = plan
 
+  variables {
+    environment = {
+      display_name     = "Production Environment"
+      location         = "unitedstates"
+      environment_type = "Production"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = false
+  }
 
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "precondition_sandbox_allows_managed_disabled" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name     = "Dev Sandbox"
+      location         = "unitedstates"
+      environment_type = "Sandbox"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = false
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "Sandbox environments should allow managed_environment_enabled = false without error."
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — environment group and standalone managed are mutually exclusive
+# ---------------------------------------------------------------------------
+
+run "precondition_environment_group_id_requires_managed_disabled" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name         = "Group Member Environment"
+      location             = "unitedstates"
+      environment_group_id = "12345678-1234-1234-1234-123456789012"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = true
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "environment_group_member_with_managed_disabled_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name         = "Group Member Environment"
+      location             = "unitedstates"
+      environment_group_id = "12345678-1234-1234-1234-123456789012"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = false
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "No standalone managed environment resource should be created when environment_group_id is set."
+  }
+}
 
 
 

@@ -320,8 +320,18 @@ DESCRIPTION
 
 variable "managed_environment_enabled" {
   default     = true
-  description = "Whether to enable Managed Environment features for this environment. Managed Environments provide premium governance capabilities including solution checker enforcement, sharing controls, and usage insights. Defaults to `true` (secure-by-default posture)."
   nullable    = false
+  description = <<DESCRIPTION
+Whether to enable Managed Environment features for this environment (standalone governance path). Defaults to `true` (secure-by-default posture).
+
+Managed Environments provide premium governance capabilities including solution checker enforcement, sharing controls, usage insights, and access to IP firewall and session cookie binding security features. All active users in a Managed Environment must hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise).
+
+**Enforced for Production**: a lifecycle precondition requires `managed_environment_enabled = true` when `environment.environment_type = "Production"`.
+
+**Mutually exclusive with `environment.environment_group_id`**: set to `false` when the environment belongs to an environment group — governance settings are then inherited from the group's rule set at the group level.
+
+Set to `false` for environments where premium licensing is not available (e.g., Developer Plan scenarios) or where governance is managed via an environment group.
+DESCRIPTION
   type        = bool
 }
 
