@@ -235,6 +235,28 @@ run "managed_environment_created_by_default" {
   }
 }
 
+run "managed_environment_empty_solution_checker_overrides_normalized_to_null" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Test Environment"
+      location     = "unitedstates"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment = {
+      solution_checker_rule_overrides = []
+    }
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 1
+    error_message = "powerplatform_managed_environment should be created when managed_environment_enabled defaults to true."
+  }
+
+
+}
+
 run "managed_environment_not_created_when_disabled" {
   command = plan
 
@@ -518,3 +540,5 @@ run "precondition_security_settings_require_managed_environment" {
 
   expect_failures = [powerplatform_environment.this]
 }
+
+

@@ -244,7 +244,7 @@ Description: Managed Environment governance configuration. Applied when `managed
 - `max_limit_user_sharing` - Maximum users canvas apps can be shared with (-1 when group sharing enabled). Defaults to `10`.
 - `power_automate_is_sharing_disabled` - Disable sharing of solution-aware cloud flows. Defaults to `true`.
 - `solution_checker_mode` - Solution checker enforcement: `None`, `Warn`, or `Block`. Defaults to `"Warn"`.
-- `solution_checker_rule_overrides` - Set of solution checker rule codes to exclude from enforcement. Defaults to `[]`.
+- `solution_checker_rule_overrides` - Set of solution checker rule codes to exclude from enforcement. Defaults to `null` (unset). Empty sets are normalized to `null` for provider compatibility.
 - `suppress_validation_emails` - Only send emails when solutions are blocked (not on warnings). Defaults to `true`.
 
 Type:
@@ -260,7 +260,7 @@ object({
     max_limit_user_sharing                             = optional(number, 10)
     power_automate_is_sharing_disabled                 = optional(bool, true)
     solution_checker_mode                              = optional(string, "Warn")
-    solution_checker_rule_overrides                    = optional(set(string), [])
+    solution_checker_rule_overrides                    = optional(set(string), null)
     suppress_validation_emails                         = optional(bool, true)
   })
 ```

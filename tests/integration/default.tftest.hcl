@@ -99,6 +99,9 @@ run "creates_managed_environment" {
       currency_code     = "USD"
       security_group_id = "00000000-0000-0000-0000-000000000000"
     }
+    managed_environment = {
+      solution_checker_rule_overrides = []
+    }
     managed_environment_enabled = true
   }
 
@@ -117,3 +120,4 @@ run "creates_managed_environment" {
     error_message = "Output 'environment_url' should not be null — all environments now have Dataverse."
   }
 }
+

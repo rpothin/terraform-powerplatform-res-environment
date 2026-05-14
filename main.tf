@@ -61,7 +61,7 @@ resource "powerplatform_managed_environment" "this" {
   max_limit_user_sharing                             = var.managed_environment.max_limit_user_sharing
   power_automate_is_sharing_disabled                 = var.managed_environment.power_automate_is_sharing_disabled
   solution_checker_mode                              = var.managed_environment.solution_checker_mode
-  solution_checker_rule_overrides                    = var.managed_environment.solution_checker_rule_overrides
+  solution_checker_rule_overrides                    = try(length(var.managed_environment.solution_checker_rule_overrides), 0) == 0 ? null : var.managed_environment.solution_checker_rule_overrides
   suppress_validation_emails                         = var.managed_environment.suppress_validation_emails
   timeouts = {
     create = "10m"
@@ -136,3 +136,4 @@ resource "powerplatform_environment_settings" "this" {
 
   depends_on = [powerplatform_managed_environment.this]
 }
+
