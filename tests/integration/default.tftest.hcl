@@ -120,4 +120,73 @@ run "creates_managed_environment" {
     error_message = "Output 'environment_url' should not be null — all environments now have Dataverse."
   }
 }
+run "creates_managed_environment_with_firewall" {
+  command   = apply
+  state_key = "managed-firewall"
 
+  variables {
+    environment = {
+      display_name = "tftest-managed-firewall-env"
+      location     = "unitedstates"
+    }
+    dataverse = {
+      currency_code     = "USD"
+      security_group_id = "00000000-0000-0000-0000-000000000000"
+    }
+    managed_environment_enabled = true
+    security_settings = {
+      enable_ip_based_firewall_rule = true
+      allowed_ip_range_for_firewall = ["10.0.0.0/24"]
+    }
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.managed_environment_id != null
+    error_message = "Output 'managed_environment_id' should be non-null when managed_environment_enabled = true and firewall settings are provided."
+  }
+}
+
+
+
+run "creates_environment_with_application_admin" {
+  command   = apply
+  state_key = "application-admin"
+
+  skip "requires_application_admin_id" {
+    condition = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID == null || trimspace(env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID) == ""
+    reason    = "Skipping application admin integration test because POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID is not set."
+  }
+
+  variables {
+    environment = {
+      display_name = "tftest-app-admin-env"
+      location     = "unitedstates"
+    }
+    dataverse = {
+      currency_code     = "USD"
+      security_group_id = "00000000-0000-0000-0000-000000000000"
+    }
+    managed_environment_enabled = true
+    application_admin_id        = env.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.managed_environment_id != null
+    error_message = "Output 'managed_environment_id' should be non-null when managed_environment_enabled = true."
+  }
+
+  assert {
+    condition     = output.environment_display_name == "tftest-app-admin-env"
+    error_message = "Output 'environment_display_name' should match the input display_name."
+  }
+}

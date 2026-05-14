@@ -326,10 +326,10 @@ variable "managed_environment_enabled" {
 }
 
 variable "security_settings" {
-  default     = null
-  nullable    = true
+  default     = {}
+  nullable    = false
   description = <<DESCRIPTION
-Optional security settings for the environment. Applied only when explicitly set and `managed_environment_enabled = true`.
+Security settings for the environment. Applied immediately when managed_environment_enabled = true (default). When managed_environment_enabled = false, values must remain at these secure defaults.
 - `allow_application_user_access` - Allow service principal (application user) access. Defaults to `true`.
 - `allow_microsoft_trusted_service_tags` - Allow Microsoft trusted service tags through the firewall. Defaults to `false`.
 - `allowed_ip_range_for_firewall` - Set of CIDR IP ranges allowed through the firewall. Defaults to `[]`.
@@ -350,5 +350,7 @@ DESCRIPTION
     reverse_proxy_ip_addresses                  = optional(set(string), [])
   })
 }
+
+
 
 

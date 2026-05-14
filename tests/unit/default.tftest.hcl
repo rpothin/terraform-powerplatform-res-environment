@@ -333,7 +333,7 @@ run "precondition_admin_mode_background_ops_conflict" {
   expect_failures = [powerplatform_environment.this]
 }
 
-run "security_settings_not_applied_by_default" {
+run "security_settings_applied_by_default_when_managed_enabled" {
   command = apply
 
   variables {
@@ -345,8 +345,8 @@ run "security_settings_not_applied_by_default" {
   }
 
   assert {
-    condition     = var.security_settings == null
-    error_message = "security_settings should default to null so security configuration is opt-in."
+    condition     = powerplatform_environment_settings.this.product.security != null
+    error_message = "product.security should be set by default when managed_environment_enabled = true."
   }
 }
 
@@ -366,10 +366,25 @@ run "security_settings_applied_when_explicit_and_managed_enabled" {
   }
 
   assert {
-    condition     = powerplatform_environment_settings.this.product.security != null
-    error_message = "product.security should be set when security_settings are explicitly provided with managed_environment_enabled = true."
+    condition     = powerplatform_environment_settings.this.product.security.enable_ip_based_firewall_rule == true
+    error_message = "Custom security settings should propagate to product.security when managed_environment_enabled = true."
   }
 }
+run "managed_environment_disabled_with_default_security_settings_plans" {
+  command = plan
+
+  variables {
+    environment                 = { display_name = "Test Environment", location = "unitedstates" }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = false
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "Plan should succeed with managed_environment_enabled = false when security_settings remain at defaults."
+  }
+}
+
 
 # ---------------------------------------------------------------------------
 # Output assertions
@@ -566,7 +581,7 @@ run "validates_display_name_no_alphanumeric" {
 # Lifecycle preconditions — security_settings requires managed_environment
 # ---------------------------------------------------------------------------
 
-run "precondition_security_settings_require_managed_environment" {
+run "precondition_fails_when_managed_environment_disabled_and_security_customized" {
   command = plan
 
   variables {
@@ -578,6 +593,8 @@ run "precondition_security_settings_require_managed_environment" {
 
   expect_failures = [powerplatform_environment.this]
 }
+
+
 
 
 
