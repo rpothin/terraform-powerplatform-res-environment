@@ -3,9 +3,11 @@
 #   source  = "rpothin/<module-name>/powerplatform"
 #   version = "~> 0.1"
 # See: https://developer.hashicorp.com/terraform/language/modules/develop/structure#examples
-module "this" {
+module "environment" {
   source = "../../" # local path for development — update to registry address before publishing
 
-  name     = var.name
-  location = var.location
+  environment = {
+    display_name = var.display_name
+    location     = var.location
+  }
 }
