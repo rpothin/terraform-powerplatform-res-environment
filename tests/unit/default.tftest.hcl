@@ -357,6 +357,7 @@ run "security_settings_applied_when_explicit_and_managed_enabled" {
     managed_environment_enabled = true
     security_settings = {
       enable_ip_based_firewall_rule = true
+      allowed_ip_range_for_firewall = ["10.0.0.0/8"]
     }
   }
 
@@ -765,4 +766,118 @@ run "precondition_application_admin_requires_dataverse" {
 
 
 
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — Production requires explicit security group
+# ---------------------------------------------------------------------------
 
+run "precondition_production_requires_non_zero_security_group" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name     = "Production Environment"
+      location         = "unitedstates"
+      environment_type = "Production"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "production_with_explicit_security_group_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name     = "Production Environment"
+      location         = "unitedstates"
+      environment_type = "Production"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "12345678-1234-1234-1234-123456789012" }
+  }
+
+  assert {
+    condition     = powerplatform_environment.this.dataverse.security_group_id == "12345678-1234-1234-1234-123456789012"
+    error_message = "Production environment with explicit security group should plan successfully."
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — IP firewall requires at least one access path
+# ---------------------------------------------------------------------------
+
+run "precondition_firewall_requires_access_path" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Secured Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = true
+    security_settings = {
+      enable_ip_based_firewall_rule = true
+    }
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "firewall_in_audit_mode_without_ips_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "Secured Environment"
+      location     = "unitedstates"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = true
+    security_settings = {
+      enable_ip_based_firewall_rule               = true
+      enable_ip_based_firewall_rule_in_audit_mode = true
+    }
+  }
+
+  assert {
+    condition     = powerplatform_environment_settings.this[0].product.security.enable_ip_based_firewall_rule_in_audit_mode == true
+    error_message = "Firewall in audit mode without allowed IPs should plan successfully."
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — auto-generated domain must be at least 2 characters
+# ---------------------------------------------------------------------------
+
+run "precondition_auto_domain_too_short" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "-A-"
+      location     = "unitedstates"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+  }
+
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "auto_domain_with_valid_display_name_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name = "AB_"
+      location     = "unitedstates"
+    }
+    dataverse = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+  }
+
+  assert {
+    condition     = powerplatform_environment.this.dataverse.domain == "ab"
+    error_message = "Display name 'AB_' should auto-generate domain 'ab' (2 characters, minimum valid domain length)."
+  }
+}

@@ -62,6 +62,28 @@ resource "powerplatform_environment" "this" {
       condition     = !(var.managed_environment_enabled && var.environment.environment_group_id != null)
       error_message = "managed_environment_enabled cannot be true when environment_group_id is set. Governance for group-member environments is controlled at the group level; set managed_environment_enabled = false when joining an environment group."
     }
+
+    precondition {
+      condition     = var.environment.environment_type != "Production" || var.dataverse == null || var.dataverse.security_group_id != "00000000-0000-0000-0000-000000000000"
+      error_message = "Production Dataverse environments require an explicit security_group_id. The all-zeros UUID (00000000-0000-0000-0000-000000000000) means no access restriction, which is not appropriate for production workloads. Set dataverse.security_group_id to a valid Azure AD security group UUID to restrict environment access."
+    }
+
+    precondition {
+      condition = (
+        var.security_settings == null ||
+        !var.security_settings.enable_ip_based_firewall_rule ||
+        var.security_settings.enable_ip_based_firewall_rule_in_audit_mode ||
+        length(var.security_settings.allowed_ip_range_for_firewall) > 0 ||
+        length(var.security_settings.allowed_service_tags_for_firewall) > 0 ||
+        var.security_settings.allow_microsoft_trusted_service_tags
+      )
+      error_message = "Enabling IP firewall enforcement (enable_ip_based_firewall_rule = true) requires at least one allowed IP range (allowed_ip_range_for_firewall), service tag (allowed_service_tags_for_firewall), or allow_microsoft_trusted_service_tags = true to prevent locking out all access. Use enable_ip_based_firewall_rule_in_audit_mode = true to test firewall rules without enforcement."
+    }
+
+    precondition {
+      condition     = var.dataverse == null || var.dataverse.domain != null || length(local.final_domain) >= 2
+      error_message = "The auto-generated environment domain is too short (minimum 2 characters). After sanitizing the display_name to a valid URL slug, the result has fewer than 2 characters. Set a display_name with at least 2 alphanumeric characters (e.g. not '-A-'), or provide an explicit value for dataverse.domain."
+    }
   }
 }
 
@@ -96,6 +118,8 @@ resource "powerplatform_environment_application_admin" "this" {
   timeouts = {
     create = "5m"
   }
+
+  depends_on = [powerplatform_environment_settings.this]
 }
 
 resource "powerplatform_environment_settings" "this" {
