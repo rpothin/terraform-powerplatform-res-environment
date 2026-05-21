@@ -1,5 +1,5 @@
 module "environment" {
-  source  = "rpothin/res-environment/powerplatform"
+  source = "rpothin/res-environment/powerplatform"
 
   environment = {
     display_name     = var.display_name
