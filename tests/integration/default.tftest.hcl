@@ -40,7 +40,7 @@ run "creates_basic_environment" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-basic-env-${var.environment.description}"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -79,7 +79,7 @@ run "creates_environment_with_custom_dataverse" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-custom-dv-env-${var.environment.description}"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -114,7 +114,7 @@ run "creates_managed_environment" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-managed-env-${var.environment.description}"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -188,7 +188,7 @@ run "creates_environment_with_application_admin" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-app-admin-env-${var.environment.description}"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
