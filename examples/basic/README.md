@@ -76,7 +76,7 @@ The following Modules are called:
 
 ### <a name="module_environment"></a> [environment](#module\_environment)
 
-Source: ../../
+Source: rpothin/res-environment/powerplatform
 
 Version:
 

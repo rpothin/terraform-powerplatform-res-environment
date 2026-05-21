@@ -15,13 +15,21 @@
 
 provider "powerplatform" {}
 
+variables {
+  environment = {
+    display_name = "tftest-shared"
+    location     = "unitedstates"
+    description  = substr(replace(uuid(), "-", ""), 0, 8)
+  }
+}
+
 run "creates_basic_environment" {
   command   = apply
   state_key = "basic"
 
   variables {
     environment = {
-      display_name = "tftest-basic-env"
+      display_name = "tftest-basic-env-${var.environment.description}"
       location     = "unitedstates"
     }
     dataverse = {
@@ -32,7 +40,7 @@ run "creates_basic_environment" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-basic-env"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -58,7 +66,7 @@ run "creates_environment_with_custom_dataverse" {
 
   variables {
     environment = {
-      display_name     = "tftest-custom-dv-env"
+      display_name     = "tftest-custom-dv-env-${var.environment.description}"
       location         = "unitedstates"
       environment_type = "Sandbox"
     }
@@ -71,7 +79,7 @@ run "creates_environment_with_custom_dataverse" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-custom-dv-env"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -92,7 +100,7 @@ run "creates_managed_environment" {
 
   variables {
     environment = {
-      display_name = "tftest-managed-env"
+      display_name = "tftest-managed-env-${var.environment.description}"
       location     = "unitedstates"
     }
     dataverse = {
@@ -106,7 +114,7 @@ run "creates_managed_environment" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-managed-env"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 
@@ -127,7 +135,7 @@ run "creates_managed_environment_with_firewall" {
 
   variables {
     environment = {
-      display_name = "tftest-managed-env"
+      display_name = "tftest-managed-env-${var.environment.description}"
       location     = "unitedstates"
     }
     dataverse = {
@@ -158,7 +166,7 @@ run "creates_environment_with_application_admin" {
 
   variables {
     environment = {
-      display_name = "tftest-app-admin-env"
+      display_name = "tftest-app-admin-env-${var.environment.description}"
       location     = "unitedstates"
     }
     dataverse = {
@@ -180,7 +188,7 @@ run "creates_environment_with_application_admin" {
   }
 
   assert {
-    condition     = output.environment_display_name == "tftest-app-admin-env"
+    condition     = output.environment_display_name == var.environment.display_name
     error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }
@@ -191,7 +199,7 @@ run "creates_environment_without_dataverse" {
 
   variables {
     environment = {
-      display_name = "tftest-no-dv-env"
+      display_name = "tftest-no-dv-env-${var.environment.description}"
       location     = "unitedstates"
     }
     dataverse                   = null
