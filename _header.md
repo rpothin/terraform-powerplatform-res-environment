@@ -45,7 +45,7 @@ This module supports three governance tiers for Power Platform environments, in 
 
 ## Prerequisites
 
-- Power Platform tenant with appropriate licensing (Managed Environments requires Power Platform premium licensing)
+- Power Platform tenant with admin permissions
 - Service principal with Power Platform admin permissions, authenticated via OIDC
 - `POWER_PLATFORM_TENANT_ID` and `POWER_PLATFORM_CLIENT_ID` environment variables set
 - CI prerequisite for application-admin integration tests: configure `POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID` as a GitHub Actions secret
@@ -53,13 +53,32 @@ This module supports three governance tiers for Power Platform environments, in 
 ## Known limitations
 
 - **`Developer` environment type** is not supported — the `microsoft/power-platform` provider cannot create Developer environments using service principal authentication
-- **Group membership requires Managed Environment** — when `environment.environment_group_id` is set, `managed_environment_enabled` must be `true`; this is a Power Platform platform requirement enforced by a lifecycle precondition
+- **Group membership requires Managed Environment** — when `environment.environment_group_id` is set, `managed_environment_enabled` **must** be `true`; this is a Power Platform platform requirement enforced by a lifecycle precondition.
 - **Security settings require Managed Environment** — `var.security_settings` is applied only when explicitly set and `managed_environment_enabled = true`; a lifecycle precondition enforces this
 - **No `prevent_destroy` guardrail** — this module does not enforce Terraform `lifecycle.prevent_destroy`; use external policy/approval controls if required
 - **Tags not supported** — the `powerplatform_environment` resource does not support Azure resource tags
-- **Premium licensing required** — Managed Environments require all active users to hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise); the Developer Plan does not include this entitlement
+- **Premium licensing applies to users, not environment creation** — enabling a Managed Environment does not require any specific license; the admin only needs Power Platform admin permissions. However, all users who actively run apps or flows *inside* a Managed Environment must hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, Dynamics 365 Enterprise, etc.); the Developer Plan does not qualify for active usage. This is a per-user compliance requirement, not an environment-provisioning prerequisite.
+- **Provider >= 4.0.0 required for group-governed environments** — the `microsoft/power-platform` provider had a bug in v3.x ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` would panic with a plugin crash when the environment was a member of an Environment Group. This was fixed in **v4.0.0** (December 2025). The `~> 4.0` constraint in this module enforces the minimum required version; verify your **resolved** provider version (check `.terraform.lock.hcl` or run `terraform providers`) rather than just the version constraint text.
 
 ## Troubleshooting
+
+### Provider crash or `Provider returned invalid result object` with group-governed managed environments
+
+When using `environment.environment_group_id` with `managed_environment_enabled = true`, you may encounter:
+
+- `Error: Plugin did not respond` / `Provider process exited unexpectedly`
+- `Error: Provider returned invalid result object after apply`
+
+In this specific scenario, a known cause is a bug in the `microsoft/power-platform` provider versions before v4.0.0 ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version via `.terraform.lock.hcl`:
+
+```bash
+cat .terraform.lock.hcl | grep -A2 "microsoft/power-platform"
+```
+
+If the resolved version is below `4.0.0`, run `terraform init -upgrade`.
+
+> [!NOTE]
+> If you cannot upgrade to provider >= 4.0.0, the only option is to remove `environment.environment_group_id`. There is no supported `managed_environment_enabled = false` workaround for grouped environments in v0.1.2+: the module precondition rejects that combination at plan time.
 
 ### Transient timing issues with Managed Environment + security/firewall settings
 

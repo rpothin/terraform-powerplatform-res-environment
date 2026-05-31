@@ -9,7 +9,7 @@ Configuration for the Power Platform environment.
 - `billing_policy_id` - (Optional) UUID of the billing policy for pay-as-you-go linking.
 - `cadence` - (Optional) Update cadence: `Frequent` or `Moderate`. Defaults to `Moderate`.
 - `description` - (Optional) Description of the environment.
-- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse.
+- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse and `managed_environment_enabled = true` (Power Platform platform requirement).
 - `environment_type` - (Optional) Type of environment: `Sandbox`, `Production`, or `Trial`. Defaults to `Sandbox`. Note: `Developer` type is not supported with service principal authentication.
 - `release_cycle` - (Optional) Release cycle participation setting.
 DESCRIPTION
