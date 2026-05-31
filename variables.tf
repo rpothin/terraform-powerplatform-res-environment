@@ -266,7 +266,9 @@ variable "managed_environment" {
   default     = {}
   nullable    = false
   description = <<DESCRIPTION
-Managed Environment governance configuration. Applied when `managed_environment_enabled = true` and no `environment_group_id` is set (settings are inherited from the group otherwise). All fields default to secure, governance-aligned values.
+Managed Environment governance configuration. Applied when `managed_environment_enabled = true`. All fields default to secure, governance-aligned values.
+
+**Interaction with environment groups (Tier 1):** When `environment.environment_group_id` is set, the `powerplatform_managed_environment` resource is still created — these settings become the env-level **initial baseline**. The group's published rule set then governs enforcement (overriding or extending individual environment settings). In practice this means you only need to customise this variable for standalone managed environments (Tier 2); group-governed environments (Tier 1) inherit policy from the group.
 - `copilot_allow_grant_editor_permissions_when_shared` - Allow Copilot to grant Editor permissions when shared. Defaults to `false`.
 - `copilot_limit_sharing_mode` - Sharing scope for Copilot agents. Valid values: `DisableSharing`, `ExcludeSharingToSecurityGroups`, `NoLimit`. Defaults to `"ExcludeSharingToSecurityGroups"`.
 - `copilot_max_limit_user_sharing` - Maximum users for Copilot agent sharing (-1 when group sharing enabled). Defaults to `10`.

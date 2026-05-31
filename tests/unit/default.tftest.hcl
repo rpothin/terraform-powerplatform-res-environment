@@ -671,6 +671,40 @@ run "environment_group_member_with_managed_enabled_plans" {
   }
 }
 
+# Regression test for the original reported limitation: Production environments were incorrectly
+# blocked from joining an environment group by two contradictory preconditions. This test asserts
+# the exact scenario now works end-to-end.
+run "production_in_environment_group_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name         = "Production Environment"
+      location             = "unitedstates"
+      environment_type     = "Production"
+      environment_group_id = "12345678-1234-1234-1234-123456789012"
+    }
+    # Production + Dataverse requires a non-zero security_group_id (separate precondition).
+    dataverse                   = { currency_code = "USD", security_group_id = "11111111-1111-1111-1111-111111111111" }
+    managed_environment_enabled = true
+  }
+
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 1
+    error_message = "Production environments can join an environment group — managed_environment_enabled = true satisfies both the group membership and governance requirements."
+  }
+
+  assert {
+    condition     = var.environment.environment_type == "Production"
+    error_message = "environment_type should be Production."
+  }
+
+  assert {
+    condition     = var.environment.environment_group_id == "12345678-1234-1234-1234-123456789012"
+    error_message = "environment_group_id should be set."
+  }
+}
+
 # ---------------------------------------------------------------------------
 # AVM SFR2 — Dataverse optional (default enabled, null to skip)
 # ---------------------------------------------------------------------------

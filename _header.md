@@ -35,7 +35,10 @@ This module supports three governance tiers for Power Platform environments, in 
 | **3 — Unmanaged** (accepted) | No premium governance required | `managed_environment_enabled = false`, no group |
 
 > [!NOTE]
-> When `environment.environment_group_id` is set, `managed_environment_enabled` **must** be `true`. The Power Platform requires environments in an environment group to be Managed Environments — this is enforced by a lifecycle precondition. The group's published rule set governs enforcement; env-level managed settings serve as the initial baseline.
+> When `environment.environment_group_id` is set, `managed_environment_enabled` **must** be `true`. The Power Platform requires environments in an environment group to be Managed Environments — this is enforced by a lifecycle precondition. The group's published rule set governs enforcement; env-level managed settings (via `var.managed_environment`) serve as the **initial baseline** and may be overridden or extended by the group rule set.
+
+> [!NOTE]
+> For group-governed environments (Tier 1), `var.managed_environment` settings are applied at the env level as a baseline but you typically do not need to customise them — the group's rule set takes precedence. Customising this variable is most relevant for standalone managed environments (Tier 2).
 
 > [!NOTE]
 > The `powerplatform_environment_group_rule_set` resource does not support service principal authentication (preview limitation). For automated pipelines using OIDC, the group-governed path still works for environment and managed environment management — only rule-set publishing requires interactive auth.
