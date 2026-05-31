@@ -221,3 +221,4 @@ run "creates_environment_without_dataverse" {
     error_message = "Output 'managed_environment_id' should be null when managed_environment_enabled = false."
   }
 }
+

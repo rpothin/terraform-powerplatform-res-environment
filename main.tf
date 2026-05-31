@@ -53,10 +53,12 @@ resource "powerplatform_environment" "this" {
       error_message = "security_settings requires managed_environment_enabled = true."
     }
 
-    precondition {
-      condition     = var.environment.environment_group_id == null || var.managed_environment_enabled
-      error_message = "managed_environment_enabled must be true when environment_group_id is set. The Power Platform requires environments in an environment group to be Managed Environments."
-    }
+    # Note: environment_group_id + managed_environment_enabled = false is intentionally
+    # not precondition-blocked. The platform design intent is that group members should
+    # be Managed Environments, but the platform does not enforce this at the API level and
+    # managed=false is a known temporary workaround for provider issues with group-managed
+    # environments (see module documentation). Use managed_environment_enabled = true for
+    # the recommended Tier 1 (group-governed) configuration.
 
     precondition {
       condition     = var.environment.environment_type != "Production" || var.dataverse == null || var.dataverse.security_group_id != "00000000-0000-0000-0000-000000000000"

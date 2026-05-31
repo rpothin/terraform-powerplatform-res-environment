@@ -633,10 +633,13 @@ run "production_with_managed_disabled_plans" {
 }
 
 # ---------------------------------------------------------------------------
-# Lifecycle preconditions — group membership requires managed environment
+# Lifecycle preconditions — group membership and managed environment
 # ---------------------------------------------------------------------------
 
-run "precondition_environment_group_id_requires_managed_enabled" {
+# group + managed=false is now permitted as a temporary workaround for known
+# provider issues with group-managed environments. The platform allows this at
+# the API level. This test asserts that no precondition blocks this combination.
+run "group_member_with_managed_disabled_plans" {
   command = plan
 
   variables {
@@ -649,7 +652,15 @@ run "precondition_environment_group_id_requires_managed_enabled" {
     managed_environment_enabled = false
   }
 
-  expect_failures = [powerplatform_environment.this]
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "No managed environment resource should be created when managed_environment_enabled = false."
+  }
+
+  assert {
+    condition     = length(powerplatform_environment_settings.this) == 1
+    error_message = "Environment settings resource should still be created when dataverse is configured, regardless of managed_environment_enabled."
+  }
 }
 
 run "environment_group_member_with_managed_enabled_plans" {
@@ -667,7 +678,7 @@ run "environment_group_member_with_managed_enabled_plans" {
 
   assert {
     condition     = length(powerplatform_managed_environment.this) == 1
-    error_message = "A managed environment resource should be created when environment_group_id is set and managed_environment_enabled = true (required by the platform for group membership)."
+    error_message = "A managed environment resource should be created when environment_group_id is set and managed_environment_enabled = true (recommended Tier 1 governance configuration)."
   }
 }
 

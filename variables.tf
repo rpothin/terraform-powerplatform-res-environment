@@ -9,7 +9,7 @@ Configuration for the Power Platform environment.
 - `billing_policy_id` - (Optional) UUID of the billing policy for pay-as-you-go linking.
 - `cadence` - (Optional) Update cadence: `Frequent` or `Moderate`. Defaults to `Moderate`.
 - `description` - (Optional) Description of the environment.
-- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse and `managed_environment_enabled = true` (Power Platform platform requirement).
+- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse. `managed_environment_enabled = true` is strongly recommended (Power Platform design intent for group-governed environments). `managed_environment_enabled = false` is technically permitted as a temporary workaround when the provider has known issues with group-managed environments — see module documentation for details and limitations.
 - `environment_type` - (Optional) Type of environment: `Sandbox`, `Production`, or `Trial`. Defaults to `Sandbox`. Note: `Developer` type is not supported with service principal authentication.
 - `release_cycle` - (Optional) Release cycle participation setting.
 DESCRIPTION
@@ -268,7 +268,9 @@ variable "managed_environment" {
   description = <<DESCRIPTION
 Managed Environment governance configuration. Applied when `managed_environment_enabled = true`. All fields default to secure, governance-aligned values.
 
-**Interaction with environment groups (Tier 1):** When `environment.environment_group_id` is set, the `powerplatform_managed_environment` resource is still created — these settings become the env-level **initial baseline**. The group's published rule set then governs enforcement (overriding or extending individual environment settings). In practice this means you only need to customise this variable for standalone managed environments (Tier 2); group-governed environments (Tier 1) inherit policy from the group.
+**Interaction with environment groups (Tier 1):** When `environment.environment_group_id` is set and `managed_environment_enabled = true` (recommended), the `powerplatform_managed_environment` resource is created — these settings become the env-level **initial baseline**. The group's published rule set then governs enforcement (overriding or extending individual environment settings). In practice this means you only need to customise this variable for standalone managed environments (Tier 2); group-governed environments (Tier 1) inherit policy from the group.
+
+**Temporary workaround for provider issues:** If the provider returns invalid attributes when using group + managed=true (see Known Limitations), you may set `managed_environment_enabled = false` as a temporary escape hatch. This prevents `powerplatform_managed_environment` from being created, but the environment will be an unmanaged group member — not the intended configuration. Restore `managed_environment_enabled = true` once the provider issue is resolved.
 - `copilot_allow_grant_editor_permissions_when_shared` - Allow Copilot to grant Editor permissions when shared. Defaults to `false`.
 - `copilot_limit_sharing_mode` - Sharing scope for Copilot agents. Valid values: `DisableSharing`, `ExcludeSharingToSecurityGroups`, `NoLimit`. Defaults to `"ExcludeSharingToSecurityGroups"`.
 - `copilot_max_limit_user_sharing` - Maximum users for Copilot agent sharing (-1 when group sharing enabled). Defaults to `10`.
@@ -331,11 +333,11 @@ Managed Environments provide premium governance capabilities including solution 
 
 This module supports three governance tiers, in recommended order:
 
-1. **Group-governed** (recommended): set `environment.environment_group_id` **and** keep `managed_environment_enabled = true`. The Power Platform requires environments in a group to be Managed Environments — this combination is enforced by a lifecycle precondition. The group's published rule set governs enforcement; the env-level managed settings serve as the initial baseline.
+1. **Group-governed** (recommended): set `environment.environment_group_id` **and** keep `managed_environment_enabled = true`. Power Platform's design intent is that group members are Managed Environments. The group's published rule set governs enforcement; the env-level managed settings serve as the initial baseline. See Known Limitations if the provider returns errors for this combination.
 2. **Standalone managed** (good): `managed_environment_enabled = true` with no group. The environment is governed individually.
 3. **Unmanaged** (accepted, not recommended): `managed_environment_enabled = false` with no group. No premium governance features are available.
 
-Set to `false` only for environments where premium licensing is not available or governance is not required.
+Set to `false` only for environments where premium licensing is not available, governance is not required, **or as a temporary escape hatch when the provider has known issues creating `powerplatform_managed_environment` for group-governed environments** (see Known Limitations — failure mode C). When used with `environment.environment_group_id`, `managed_environment_enabled = false` is technically permitted by the platform API but is not the intended configuration; `security_settings` will not be applied in that state.
 DESCRIPTION
   type        = bool
 }
