@@ -5,6 +5,12 @@
 #   POWER_PLATFORM_TENANT_ID=<your-tenant-id>
 #   POWER_PLATFORM_CLIENT_ID=<your-client-id>
 #
+# Optional prerequisites (required only for specific test scenarios):
+#   TF_VAR_environment_group_id=<uuid> — UUID of an existing environment group in the
+#     test tenant. Required for the "creates_environment_in_group_managed" test (Case 4:
+#     environment group + managed). Set via the POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID
+#     GitHub Actions secret. When not set, that test will fail with a clear error message.
+#
 # These tests create real resources against a Power Platform tenant.
 # Resources are automatically destroyed after test completion by the
 # Terraform test framework. Do NOT run locally without valid credentials.
@@ -14,6 +20,15 @@
 # cascades when variable changes span multiple scenarios.
 
 provider "powerplatform" {}
+
+# UUID of an existing environment group in the test tenant.
+# Populated via TF_VAR_environment_group_id (set from the
+# POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID GitHub Actions secret).
+variable "environment_group_id" {
+  type     = string
+  nullable = true
+  default  = null
+}
 
 variables {
   environment = {
@@ -219,5 +234,50 @@ run "creates_environment_without_dataverse" {
   assert {
     condition     = output.managed_environment_id == null
     error_message = "Output 'managed_environment_id' should be null when managed_environment_enabled = false."
+  }
+}
+
+# Case 4: environment_group_id + managed_environment_enabled = true
+# Requires TF_VAR_environment_group_id to be set (POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID secret).
+run "creates_environment_in_group_managed" {
+  command   = apply
+  state_key = "group-managed"
+
+  variables {
+    environment = {
+      display_name         = "tftest-group-managed-${var.environment.description}"
+      location             = "unitedstates"
+      environment_group_id = var.environment_group_id
+    }
+    dataverse = {
+      currency_code     = "USD"
+      security_group_id = "00000000-0000-0000-0000-000000000000"
+    }
+    managed_environment_enabled = true
+  }
+
+  assert {
+    condition     = var.environment_group_id != null
+    error_message = "Test variable 'environment_group_id' must be set via TF_VAR_environment_group_id (POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID secret) to run this test."
+  }
+
+  assert {
+    condition     = output.environment_id != ""
+    error_message = "Output 'environment_id' should be a non-empty string after apply."
+  }
+
+  assert {
+    condition     = output.managed_environment_id != null
+    error_message = "Output 'managed_environment_id' should be non-null when managed_environment_enabled = true."
+  }
+
+  assert {
+    condition     = output.environment_url != null
+    error_message = "Output 'environment_url' should not be null when Dataverse is provisioned."
+  }
+
+  assert {
+    condition     = output.environment_display_name == var.environment.display_name
+    error_message = "Output 'environment_display_name' should match the input display_name."
   }
 }

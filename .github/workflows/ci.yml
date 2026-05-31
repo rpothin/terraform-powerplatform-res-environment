@@ -127,6 +127,12 @@ jobs:
         with:
           terraform_wrapper: false
 
+      - name: Set optional integration test variables
+        run: |
+          if [ -n "${{ secrets.POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID }}" ]; then
+            echo "TF_VAR_environment_group_id=${{ secrets.POWER_PLATFORM_TEST_ENVIRONMENT_GROUP_ID }}" >> "$GITHUB_ENV"
+          fi
+
       - name: Run Integration Tests
         run: make test-integration
         env:
