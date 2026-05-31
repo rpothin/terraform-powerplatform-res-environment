@@ -71,15 +71,16 @@ When using `environment.environment_group_id` with `managed_environment_enabled 
 - `Error: Plugin did not respond` / `Provider process exited unexpectedly`
 - `Error: Provider returned invalid result object after apply`
 
-These errors are caused by a bug in the `microsoft/power-platform` provider versions before v4.0.0 ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version:
+In this specific scenario, a known cause is a bug in the `microsoft/power-platform` provider versions before v4.0.0 ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version via `.terraform.lock.hcl`:
 
 ```bash
 cat .terraform.lock.hcl | grep -A2 "microsoft/power-platform"
-# or
-terraform providers
 ```
 
 If the resolved version is below `4.0.0`, run `terraform init -upgrade`.
+
+> [!NOTE]
+> If you cannot upgrade to provider >= 4.0.0, the only option is to remove `environment.environment_group_id`. There is no supported `managed_environment_enabled = false` workaround for grouped environments in v0.1.2+: the module precondition rejects that combination at plan time.
 
 ### Transient timing issues with Managed Environment + security/firewall settings
 
@@ -128,7 +129,7 @@ Description: Configuration for the Power Platform environment.
 - `billing_policy_id` - (Optional) UUID of the billing policy for pay-as-you-go linking.
 - `cadence` - (Optional) Update cadence: `Frequent` or `Moderate`. Defaults to `Moderate`.
 - `description` - (Optional) Description of the environment.
-- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse and `managed_environment_enabled = true` (Power Platform platform requirement). Qualifying premium licensing is required for all active users in the environment.
+- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse and `managed_environment_enabled = true` (Power Platform platform requirement).
 - `environment_type` - (Optional) Type of environment: `Sandbox`, `Production`, or `Trial`. Defaults to `Sandbox`. Note: `Developer` type is not supported with service principal authentication.
 - `release_cycle` - (Optional) Release cycle participation setting.
 

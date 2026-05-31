@@ -69,15 +69,16 @@ When using `environment.environment_group_id` with `managed_environment_enabled 
 - `Error: Plugin did not respond` / `Provider process exited unexpectedly`
 - `Error: Provider returned invalid result object after apply`
 
-These errors are caused by a bug in the `microsoft/power-platform` provider versions before v4.0.0 ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version:
+In this specific scenario, a known cause is a bug in the `microsoft/power-platform` provider versions before v4.0.0 ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version via `.terraform.lock.hcl`:
 
 ```bash
 cat .terraform.lock.hcl | grep -A2 "microsoft/power-platform"
-# or
-terraform providers
 ```
 
 If the resolved version is below `4.0.0`, run `terraform init -upgrade`.
+
+> [!NOTE]
+> If you cannot upgrade to provider >= 4.0.0, the only option is to remove `environment.environment_group_id`. There is no supported `managed_environment_enabled = false` workaround for grouped environments in v0.1.2+: the module precondition rejects that combination at plan time.
 
 ### Transient timing issues with Managed Environment + security/firewall settings
 
