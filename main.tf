@@ -54,13 +54,8 @@ resource "powerplatform_environment" "this" {
     }
 
     precondition {
-      condition     = var.environment.environment_type != "Production" || var.managed_environment_enabled
-      error_message = "Production environments require managed_environment_enabled = true. Managed Environments provide governance controls (solution checker enforcement, sharing limits, IP firewall capability) that are required for production workloads."
-    }
-
-    precondition {
-      condition     = !(var.managed_environment_enabled && var.environment.environment_group_id != null)
-      error_message = "managed_environment_enabled cannot be true when environment_group_id is set. Governance for group-member environments is controlled at the group level; set managed_environment_enabled = false when joining an environment group."
+      condition     = var.environment.environment_group_id == null || var.managed_environment_enabled
+      error_message = "managed_environment_enabled must be true when environment_group_id is set. The Power Platform requires environments in an environment group to be Managed Environments."
     }
 
     precondition {

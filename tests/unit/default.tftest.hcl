@@ -591,24 +591,8 @@ run "precondition_security_settings_require_managed_environment" {
 }
 
 # ---------------------------------------------------------------------------
-# Lifecycle preconditions — Production requires managed environment
+# Lifecycle preconditions — Production and unmanaged environments
 # ---------------------------------------------------------------------------
-
-run "precondition_production_requires_managed_environment" {
-  command = plan
-
-  variables {
-    environment = {
-      display_name     = "Production Environment"
-      location         = "unitedstates"
-      environment_type = "Production"
-    }
-    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
-    managed_environment_enabled = false
-  }
-
-  expect_failures = [powerplatform_environment.this]
-}
 
 run "precondition_sandbox_allows_managed_disabled" {
   command = plan
@@ -629,27 +613,30 @@ run "precondition_sandbox_allows_managed_disabled" {
   }
 }
 
-# ---------------------------------------------------------------------------
-# Lifecycle preconditions — environment group and standalone managed are mutually exclusive
-# ---------------------------------------------------------------------------
-
-run "precondition_environment_group_id_requires_managed_disabled" {
+run "production_with_managed_disabled_plans" {
   command = plan
 
   variables {
     environment = {
-      display_name         = "Group Member Environment"
-      location             = "unitedstates"
-      environment_group_id = "12345678-1234-1234-1234-123456789012"
+      display_name     = "Production Environment"
+      location         = "unitedstates"
+      environment_type = "Production"
     }
-    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
-    managed_environment_enabled = true
+    dataverse                   = { currency_code = "USD", security_group_id = "11111111-1111-1111-1111-111111111111" }
+    managed_environment_enabled = false
   }
 
-  expect_failures = [powerplatform_environment.this]
+  assert {
+    condition     = length(powerplatform_managed_environment.this) == 0
+    error_message = "Production environments should allow managed_environment_enabled = false — no platform constraint prevents it."
+  }
 }
 
-run "environment_group_member_with_managed_disabled_plans" {
+# ---------------------------------------------------------------------------
+# Lifecycle preconditions — group membership requires managed environment
+# ---------------------------------------------------------------------------
+
+run "precondition_environment_group_id_requires_managed_enabled" {
   command = plan
 
   variables {
@@ -662,9 +649,25 @@ run "environment_group_member_with_managed_disabled_plans" {
     managed_environment_enabled = false
   }
 
+  expect_failures = [powerplatform_environment.this]
+}
+
+run "environment_group_member_with_managed_enabled_plans" {
+  command = plan
+
+  variables {
+    environment = {
+      display_name         = "Group Member Environment"
+      location             = "unitedstates"
+      environment_group_id = "12345678-1234-1234-1234-123456789012"
+    }
+    dataverse                   = { currency_code = "USD", security_group_id = "00000000-0000-0000-0000-000000000000" }
+    managed_environment_enabled = true
+  }
+
   assert {
-    condition     = length(powerplatform_managed_environment.this) == 0
-    error_message = "No standalone managed environment resource should be created when environment_group_id is set."
+    condition     = length(powerplatform_managed_environment.this) == 1
+    error_message = "A managed environment resource should be created when environment_group_id is set and managed_environment_enabled = true (required by the platform for group membership)."
   }
 }
 
@@ -741,7 +744,7 @@ run "precondition_environment_group_requires_dataverse" {
       environment_group_id = "12345678-1234-1234-1234-123456789012"
     }
     dataverse                   = null
-    managed_environment_enabled = false
+    managed_environment_enabled = true
   }
 
   expect_failures = [powerplatform_environment.this]
