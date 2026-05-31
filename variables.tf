@@ -337,7 +337,7 @@ This module supports three governance tiers, in recommended order:
 2. **Standalone managed** (good): `managed_environment_enabled = true` with no group. The environment is governed individually.
 3. **Unmanaged** (accepted, not recommended): `managed_environment_enabled = false` with no group. No premium governance features are available.
 
-Set to `false` only for environments where premium licensing is not available or governance is not required.
+Set to `false` only for environments where premium licensing is not available, governance is not required, **or as a temporary escape hatch when the provider has known issues creating `powerplatform_managed_environment` for group-governed environments** (see Known Limitations — failure mode C). When used with `environment.environment_group_id`, `managed_environment_enabled = false` is technically permitted by the platform API but is not the intended configuration; `security_settings` will not be applied in that state.
 DESCRIPTION
   type        = bool
 }
