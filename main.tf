@@ -1,3 +1,4 @@
+# Test
 resource "powerplatform_environment" "this" {
   display_name     = var.environment.display_name
   environment_type = var.environment.environment_type
