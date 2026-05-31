@@ -266,7 +266,9 @@ variable "managed_environment" {
   default     = {}
   nullable    = false
   description = <<DESCRIPTION
-Managed Environment governance configuration. Applied when `managed_environment_enabled = true` and no `environment_group_id` is set (settings are inherited from the group otherwise). All fields default to secure, governance-aligned values.
+Managed Environment governance configuration. Applied when `managed_environment_enabled = true`. All fields default to secure, governance-aligned values.
+
+**Interaction with environment groups (Tier 1):** When `environment.environment_group_id` is set, the `powerplatform_managed_environment` resource is still created — these settings become the env-level **initial baseline**. The group's published rule set then governs enforcement (overriding or extending individual environment settings). In practice this means you only need to customise this variable for standalone managed environments (Tier 2); group-governed environments (Tier 1) inherit policy from the group.
 - `copilot_allow_grant_editor_permissions_when_shared` - Allow Copilot to grant Editor permissions when shared. Defaults to `false`.
 - `copilot_limit_sharing_mode` - Sharing scope for Copilot agents. Valid values: `DisableSharing`, `ExcludeSharingToSecurityGroups`, `NoLimit`. Defaults to `"ExcludeSharingToSecurityGroups"`.
 - `copilot_max_limit_user_sharing` - Maximum users for Copilot agent sharing (-1 when group sharing enabled). Defaults to `10`.
@@ -323,15 +325,17 @@ variable "managed_environment_enabled" {
   default     = true
   nullable    = false
   description = <<DESCRIPTION
-Whether to enable Managed Environment features for this environment (standalone governance path). Defaults to `true` (secure-by-default posture).
+Whether to enable Managed Environment features for this environment. Defaults to `true` (secure-by-default posture).
 
 Managed Environments provide premium governance capabilities including solution checker enforcement, sharing controls, usage insights, and access to IP firewall and session cookie binding security features. All active users in a Managed Environment must hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise).
 
-**Enforced for Production**: a lifecycle precondition requires `managed_environment_enabled = true` when `environment.environment_type = "Production"`.
+This module supports three governance tiers, in recommended order:
 
-**Mutually exclusive with `environment.environment_group_id`**: set to `false` when the environment belongs to an environment group — governance settings are then inherited from the group's rule set at the group level.
+1. **Group-governed** (recommended): set `environment.environment_group_id` **and** keep `managed_environment_enabled = true`. The Power Platform requires environments in a group to be Managed Environments — this combination is enforced by a lifecycle precondition. The group's published rule set governs enforcement; the env-level managed settings serve as the initial baseline.
+2. **Standalone managed** (good): `managed_environment_enabled = true` with no group. The environment is governed individually.
+3. **Unmanaged** (accepted, not recommended): `managed_environment_enabled = false` with no group. No premium governance features are available.
 
-Set to `false` for environments where premium licensing is not available (e.g., Developer Plan scenarios) or where governance is managed via an environment group.
+Set to `false` only for environments where premium licensing is not available or governance is not required.
 DESCRIPTION
   type        = bool
 }
