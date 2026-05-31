@@ -55,13 +55,37 @@ This module supports three governance tiers for Power Platform environments, in 
 ## Known limitations
 
 - **`Developer` environment type** is not supported — the `microsoft/power-platform` provider cannot create Developer environments using service principal authentication
-- **Group membership requires Managed Environment** — when `environment.environment_group_id` is set, `managed_environment_enabled` must be `true`; this is a Power Platform platform requirement enforced by a lifecycle precondition
+- **Group membership requires Managed Environment and premium licensing** — when `environment.environment_group_id` is set, `managed_environment_enabled` **must** be `true`; this is a Power Platform platform requirement enforced by a lifecycle precondition. Group-governed environments require qualifying premium licensing for all active users. In unlicensed tenants the `powerplatform_managed_environment` apply will fail — see [Troubleshooting](#troubleshooting) for guidance.
 - **Security settings require Managed Environment** — `var.security_settings` is applied only when explicitly set and `managed_environment_enabled = true`; a lifecycle precondition enforces this
 - **No `prevent_destroy` guardrail** — this module does not enforce Terraform `lifecycle.prevent_destroy`; use external policy/approval controls if required
 - **Tags not supported** — the `powerplatform_environment` resource does not support Azure resource tags
-- **Premium licensing required** — Managed Environments require all active users to hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise); the Developer Plan does not include this entitlement
+- **Premium licensing required** — Managed Environments require all active users to hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise); the Developer Plan does not include this entitlement. Attempting to apply `managed_environment_enabled = true` in an unlicensed tenant can produce `Provider returned invalid result object after apply` errors.
+- **Provider >= 4.0.0 required for group-governed environments** — the `microsoft/power-platform` provider had a bug in v3.x ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` would panic with a plugin crash when the environment was a member of an Environment Group. This was fixed in **v4.0.0** (December 2025). The `~> 4.0` constraint in this module enforces the minimum required version; verify your **resolved** provider version (check `.terraform.lock.hcl` or run `terraform providers`) rather than just the version constraint text.
 
 ## Troubleshooting
+
+### Provider crash or `Provider returned invalid result object` with group-governed managed environments
+
+When using `environment.environment_group_id` with `managed_environment_enabled = true`, you may encounter:
+
+- `Error: Plugin did not respond` / `Provider process exited unexpectedly`
+- `Error: Provider returned invalid result object after apply`
+
+These errors **can be caused by** one or more of:
+
+1. **Provider version below v4.0.0** — provider versions before v4.0.0 contain a bug ([issue #931](https://github.com/microsoft/terraform-provider-power-platform/issues/931)) where `powerplatform_managed_environment` crashes during refresh when the environment is a member of an Environment Group. The `~> 4.0` constraint in this module enforces the minimum required version, but verify the **resolved** version:
+
+   ```bash
+   cat .terraform.lock.hcl | grep -A2 "microsoft/power-platform"
+   # or
+   terraform providers
+   ```
+
+   If the resolved version is below `4.0.0`, run `terraform init -upgrade`.
+
+2. **Tenant lacks Managed Environment licensing** — Managed Environments require all active users to hold a qualifying premium licence (Power Apps Premium, Power Automate Premium, or Dynamics 365 Enterprise). The Power Platform API may accept the apply but return a malformed or empty state object if the feature is not activated for the tenant.
+
+   Verify licensing in the [Power Platform admin center](https://admin.powerplatform.microsoft.com) or consult your tenant administrator.
 
 ### Transient timing issues with Managed Environment + security/firewall settings
 
@@ -110,7 +134,7 @@ Description: Configuration for the Power Platform environment.
 - `billing_policy_id` - (Optional) UUID of the billing policy for pay-as-you-go linking.
 - `cadence` - (Optional) Update cadence: `Frequent` or `Moderate`. Defaults to `Moderate`.
 - `description` - (Optional) Description of the environment.
-- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse.
+- `environment_group_id` - (Optional) UUID of the environment group to join. Requires Dataverse and `managed_environment_enabled = true` (Power Platform platform requirement). Qualifying premium licensing is required for all active users in the environment.
 - `environment_type` - (Optional) Type of environment: `Sandbox`, `Production`, or `Trial`. Defaults to `Sandbox`. Note: `Developer` type is not supported with service principal authentication.
 - `release_cycle` - (Optional) Release cycle participation setting.
 
