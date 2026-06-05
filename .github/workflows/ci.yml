@@ -114,7 +114,7 @@ jobs:
   integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    if: vars.ENABLE_INTEGRATION_TESTS == 'true'
+    if: vars.ENABLE_INTEGRATION_TESTS == 'true' && github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       id-token: write
@@ -134,4 +134,3 @@ jobs:
           POWER_PLATFORM_TENANT_ID: ${{ secrets.POWER_PLATFORM_TENANT_ID }}
           POWER_PLATFORM_CLIENT_ID: ${{ secrets.POWER_PLATFORM_CLIENT_ID }}
           POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID: ${{ secrets.POWER_PLATFORM_TEST_APPLICATION_ADMIN_ID }}
-
